@@ -163,15 +163,20 @@ const getAttendanceForAdmin = asyncHandler(async (req, res) => {
     }
 
     // Lấy tất cả bản ghi chấm công/nghỉ phép cho ngày đã chọn
-    const attendanceRecordsForDate = await Attendance.find({ date: date }).populate('user', 'name email role');
+    let attendanceRecordsForDate = await Attendance.find({ date: date }).populate('user', 'name email role');
+
+    // Lọc bỏ các bản ghi mà user reference bị null sau khi populate
+    // Điều này ngăn chặn lỗi khi truy cập record.user.name/email/role nếu user đã bị xóa
+    attendanceRecordsForDate = attendanceRecordsForDate.filter(record => record.user !== null);
 
     const checkedInUsers = [];
     const onLeaveUsers = [];
-    const processedUserIds = new Set();
+    const processedUserIds = new Set(); // Dùng để theo dõi những người đã được xử lý (chấm công hoặc nghỉ phép)
 
     attendanceRecordsForDate.forEach(record => {
         // Chỉ xử lý bản ghi nếu nó thuộc về người dùng đang được query (hoặc tất cả người dùng nếu không có filter)
-        if (usersToQuery.length === 0 || usersToQuery.some(u => u._id.toString() === record.user._id.toString())) {
+        // và đảm bảo record.user tồn tại
+        if (record.user && (usersToQuery.length === 0 || usersToQuery.some(u => u._id.toString() === record.user._id.toString()))) {
             processedUserIds.add(record.user._id.toString());
             if (record.isLeave) {
                 onLeaveUsers.push(record);

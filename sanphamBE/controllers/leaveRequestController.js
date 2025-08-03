@@ -2,6 +2,8 @@
 import asyncHandler from 'express-async-handler';
 import LeaveRequest from '../models/LeaveRequest.js';
 import User from '../models/User.js'; // Để lấy thông tin người dùng
+import { createNotification } from './notificationController.js'; // Import hàm tạo thông báo
+import { format } from 'date-fns'; // Import format để định dạng ngày
 
 // @desc    Tạo yêu cầu nghỉ phép mới
 // @route   POST /api/leave-requests
@@ -37,6 +39,25 @@ const createLeaveRequest = asyncHandler(async (req, res) => {
     });
 
     if (leaveRequest) {
+        // Gửi thông báo cho admin khi có đơn nghỉ phép mới
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+            await createNotification({
+                sender: _id, // Người gửi là user
+                senderName: name,
+                receiver: admin._id,
+                receiverRole: 'admin',
+                type: 'new_leave_request',
+                message: `${name} đã gửi một yêu cầu nghỉ phép mới cho ngày ${format(new Date(requestDate), 'dd/MM/yyyy')}.`,
+                entityId: leaveRequest._id,
+                relatedDate: requestDate,
+            });
+            // Emit thông báo qua Socket.IO cho từng admin
+            if (req.io) { // Đảm bảo req.io tồn tại
+                req.io.to(admin._id.toString()).emit('newNotification', { type: 'new_leave_request', entityId: leaveRequest._id });
+            }
+        }
+
         res.status(201).json({
             message: 'Yêu cầu nghỉ phép đã được gửi thành công.',
             leaveRequest,

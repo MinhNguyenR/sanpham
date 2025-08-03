@@ -2,9 +2,20 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/User.js';
 
+// @desc    Lấy tất cả người dùng (dùng cho các trường hợp cần trả về { users: [...] })
+// @route   GET /api/auth/users
+// @access  Private (Admin only)
 const getAllUsers = asyncHandler(async (req, res) => {
     const users = await User.find({}).select('-password');
-    res.status(200).json(users);
+    res.status(200).json({ users }); // Trả về một đối tượng có khóa 'users'
+});
+
+// @desc    Lấy tất cả người dùng (dùng riêng cho Quản lý nhân viên, trả về mảng trực tiếp)
+// @route   GET /api/auth/users-management (route mới)
+// @access  Private (Admin only)
+const getAllUsersForManagement = asyncHandler(async (req, res) => {
+    const users = await User.find({}).select('-password');
+    res.status(200).json(users); // Trả về trực tiếp mảng người dùng
 });
 
 const updateUserByAdmin = asyncHandler(async (req, res) => {
@@ -70,6 +81,7 @@ const deleteUserByAdmin = asyncHandler(async (req, res) => {
 
 export {
     getAllUsers,
+    getAllUsersForManagement, // Export hàm mới
     updateUserByAdmin,
     deleteUserByAdmin
 };

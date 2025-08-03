@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
-import { Button, message, Spin, Table, Tag, Modal, Input } from 'antd'; // Bỏ Select
+import { Button, message, Spin, Table, Tag, Modal, Input } from 'antd';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -76,6 +76,13 @@ const QLChamCong = () => {
     }, [user, authLoading, selectedDate]); // Bỏ searchQuery và searchType khỏi dependency array
 
     const handleActionLeave = async () => {
+        // Thêm kiểm tra phòng thủ ở đây
+        if (!currentRecordToUpdate) {
+            message.error('Không có bản ghi nào được chọn để xử lý.');
+            setIsLeaveModalOpen(false);
+            return;
+        }
+
         setLoadingAttendance(true);
         const token = localStorage.getItem('token');
         if (!token) {
@@ -152,21 +159,25 @@ const QLChamCong = () => {
         setSelectedDate(e.target.value);
     };
 
+    // Cập nhật commonAttendanceColumns để truy cập thuộc tính lồng
     const commonAttendanceColumns = [
         {
             title: 'Tên',
-            dataIndex: 'name',
+            dataIndex: ['user', 'name'], // Thay đổi để truy cập user.name
             key: 'name',
+            render: (text, record) => record.user?.name || 'N/A' // Fallback nếu user null
         },
         {
             title: 'Email',
-            dataIndex: 'email',
+            dataIndex: ['user', 'email'], // Thay đổi để truy cập user.email
             key: 'email',
+            render: (text, record) => record.user?.email || 'N/A' // Fallback nếu user null
         },
         {
             title: 'Vai trò',
-            dataIndex: 'role',
+            dataIndex: ['user', 'role'], // Thay đổi để truy cập user.role
             key: 'role',
+            render: (text, record) => record.user?.role || 'N/A' // Fallback nếu user null
         },
     ];
 
@@ -208,8 +219,23 @@ const QLChamCong = () => {
         },
     ];
 
+    // notCheckedInColumns vẫn truy cập trực tiếp vì adminAttendanceData.notCheckedInAndNotOnLeaveUsers là mảng User objects
     const notCheckedInColumns = [
-        ...commonAttendanceColumns,
+        {
+            title: 'Tên',
+            dataIndex: 'name',
+            key: 'name',
+        },
+        {
+            title: 'Email',
+            dataIndex: 'email',
+            key: 'email',
+        },
+        {
+            title: 'Vai trò',
+            dataIndex: 'role',
+            key: 'role',
+        },
         {
             title: 'Hành động',
             key: 'action',
@@ -266,7 +292,6 @@ const QLChamCong = () => {
                             onChange={handleDateChange}
                             className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
-                        {/* Đã bỏ Input.Group và Select/Input.Search */}
                     </div>
 
                     {loadingAttendance ? (

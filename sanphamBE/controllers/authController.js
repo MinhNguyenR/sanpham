@@ -11,7 +11,16 @@ const generateToken = (id) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-    const { name, email, password, role } = req.body; // THÊM LẠI 'role' Ở ĐÂY
+    // LOG TOÀN BỘ REQ.BODY NGAY KHI NHẬN ĐƯỢC
+    console.log("Full req.body received by registerUser:", req.body);
+
+    const { name, email, password, role, nickname, bio, introduction, skills } = req.body; // Đảm bảo lấy đủ các trường từ req.body
+
+    // Kiểm tra xem email có tồn tại và không rỗng không
+    if (!email || email.trim() === '') {
+        res.status(400);
+        throw new Error('Email không được để trống.');
+    }
 
     const passwordRegex = /^(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{6,})/;
     if (!passwordRegex.test(password)) {
@@ -25,17 +34,23 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new Error('Người dùng đã tồn tại với email này.');
     }
 
+    // Xử lý skills thành mảng nếu nó là chuỗi
+    const processedSkills = Array.isArray(skills)
+        ? skills
+        : (skills && typeof skills === 'string'
+            ? skills.split(',').map(s => s.trim()).filter(s => s !== '')
+            : []);
 
     const user = await User.create({
         name,
         email,
         password,
-        role: role || 'user', // SỬ DỤNG 'role' TỪ REQ.BODY HOẶC MẶC ĐỊNH LÀ 'user'
-        nickname: '',
-        avatar: '',
-        bio: '',
-        introduction: '',
-        skills: [],
+        role: role || 'user',
+        nickname: nickname || '', // Lấy từ req.body, mặc định rỗng
+        avatar: '', // Giữ nguyên mặc định
+        bio: bio || '', // Lấy từ req.body, mặc định rỗng
+        introduction: introduction || '', // Lấy từ req.body, mặc định rỗng
+        skills: processedSkills, // Sử dụng processedSkills
     });
 
     if (user) {
@@ -150,10 +165,10 @@ const deleteUser = asyncHandler(async (req, res) => {
 
         res.status(200).json({ message: 'Tài khoản đã được xóa thành công.' });
     } else {
-        res.status(404);
-        throw new Error('Không tìm thấy người dùng để xóa.');
-    }
-});
+            res.status(404);
+            throw new Error('Không tìm thấy người dùng để xóa.');
+        }
+    });
 
 const createAdminAccount = async () => {
     const adminEmail = 'nguyendangtuongminh555@gmail.com';

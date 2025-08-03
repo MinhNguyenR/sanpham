@@ -2,6 +2,8 @@
 import asyncHandler from 'express-async-handler';
 import Complaint from '../models/Complaint.js';
 import User from '../models/User.js'; // Để lấy thông tin người dùng
+import { createNotification } from './notificationController.js'; // Import hàm tạo thông báo
+import { format } from 'date-fns'; // Import format để định dạng ngày
 
 // @desc    Tạo khiếu nại mới
 // @route   POST /api/complaints
@@ -25,6 +27,25 @@ const createComplaint = asyncHandler(async (req, res) => {
     });
 
     if (complaint) {
+        // Gửi thông báo cho admin khi có khiếu nại mới
+        const admins = await User.find({ role: 'admin' });
+        for (const admin of admins) {
+            await createNotification({
+                sender: _id, // Người gửi là user
+                senderName: name,
+                receiver: admin._id,
+                receiverRole: 'admin',
+                type: 'new_complaint',
+                message: `${name} đã gửi một khiếu nại mới với chủ đề: "${subject}".`,
+                entityId: complaint._id,
+                relatedDate: format(new Date(), 'yyyy-MM-dd'), // Ngày hiện tại
+            });
+            // Emit thông báo qua Socket.IO cho từng admin
+            if (req.io) { // Đảm bảo req.io tồn tại
+                req.io.to(admin._id.toString()).emit('newNotification', { type: 'new_complaint', entityId: complaint._id });
+            }
+        }
+
         res.status(201).json({
             message: 'Khiếu nại đã được gửi thành công.',
             complaint,
