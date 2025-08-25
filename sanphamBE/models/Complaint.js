@@ -16,6 +16,10 @@ const complaintSchema = mongoose.Schema(
             type: String,
             required: true,
         },
+        position: { // THÊM TRƯỜNG NÀY
+            type: String,
+            required: true, // Hoặc false tùy theo logic nghiệp vụ của bạn
+        },
         subject: { // Chủ đề khiếu nại
             type: String,
             required: true,

@@ -8,19 +8,29 @@ import QuanLyTaiKhoan from './Pages/QuanLyTaiKhoan';
 import SettingsPage from './Pages/SettingsPage';
 import QuyenRiengTu from './Pages/QuyenRiengTu';
 import QuanLyNhanVien from './Pages/QuanLyNhanVien';
-import ChamCong from './Pages/ChamCong'; // Trang chấm công cho user và admin
-import QLChamCong from './Pages/QLChamCong'; // Trang quản lý chấm công cho admin
-import XinNghi from './Pages/XinNghi'; // Import trang XinNghi
-import KhieuNai from './Pages/KhieuNai'; // Import trang KhieuNai
-import QuanLyXinNghi from './Pages/QuanLyXinNghi'; // Import trang QuanLyXinNghi
-import QuanLyKhieuNai from './Pages/QuanLyKhieuNai'; // Import trang QuanLyKhieuNai
-import ThongBao from './Pages/ThongBao'; // Import trang ThongBao
-import GuiThongBao from './Pages/GuiThongBao'; // Import trang GuiThongBao
-import KhoaHoc from './Pages/KhoaHoc'; // Import trang KhoaHoc
-import QuanLyKhoaHoc from './Pages/QuanLyKhoaHoc'; // Import trang QuanLyKhoaHoc
-import DanhGia from './Pages/DanhGia'; // Import trang DanhGia cho user
-import QuanLyDanhGia from './Pages/QuanLyDanhGia'; // Import trang QuanLyDanhGia cho admin
-
+import ChamCong from './Pages/ChamCong'; 
+import QLChamCong from './Pages/QLChamCong'; 
+import XinNghi from './Pages/XinNghi'; 
+import KhieuNai from './Pages/KhieuNai'; 
+import QuanLyXinNghi from './Pages/QuanLyXinNghi';
+import QuanLyKhieuNai from './Pages/QuanLyKhieuNai';
+import ThongBao from './Pages/ThongBao'; 
+import GuiThongBao from './Pages/GuiThongBao'; 
+import KhoaHoc from './Pages/KhoaHoc'; 
+import QuanLyKhoaHoc from './Pages/QuanLyKhoaHoc'; 
+import DanhGia from './Pages/DanhGia'; 
+import QuanLyDanhGia from './Pages/QuanLyDanhGia'; 
+import LuongThuong from './Pages/LuongThuong'; 
+import QuanLyLuongThuong from './Pages/QuanLyLuongThuong'; 
+import PhucLoi from './Pages/PhucLoi'; 
+import QuanLyPhucLoi from './Pages/QuanLyPhucLoi';
+import TuyenDung from './Pages/TuyenDung'; 
+import DonUngTuyenCuaToi from './Pages/DonUngTuyenCuaToi';
+import QuanLyTuyenDung from './Pages/QuanLyTuyenDung'; 
+import QuanLyCauHinh from './Pages/QuanLyCauHinh'; 
+import QuanLyHopDong from './Pages/QuanLyHopDong';
+import HopDongCuaToi from './Pages/HopDongCuaToi'; 
+import HopDongSapHetHan from './Pages/HopDongSapHetHan'; 
 import PrivateRoutes from './Router/PrivateRoutes';
 import { AuthProvider } from './Context/AuthContext';
 
@@ -41,9 +51,13 @@ function App() {
           <Route path="/xinnghi" element={<XinNghi />} />
           <Route path="/khieunai" element={<KhieuNai />} />
           <Route path="/thongbao" element={<ThongBao />} />
-          <Route path="/khoahoc" element={<KhoaHoc />} /> {/* Trang khóa học cho cả user và admin */}
-          <Route path="/danhgia" element={<DanhGia />} /> {/* Trang đánh giá cho user */}
-
+          <Route path="/khoahoc" element={<KhoaHoc />} />
+          <Route path="/danhgia" element={<DanhGia />} />
+          <Route path="/luongthuong" element={<LuongThuong />} />
+          <Route path="/phucloi" element={<PhucLoi />} />
+          <Route path="/tuyendung" element={<TuyenDung />} />
+          <Route path="/donungtuyencuatoi" element={<DonUngTuyenCuaToi />} />
+          <Route path="/hopdongcuatoi" element={<HopDongCuaToi />} />
 
           {/* Routes chỉ dành cho Admin */}
           <Route element={<PrivateRoutes allowedRoles={['admin']} />}>
@@ -52,8 +66,14 @@ function App() {
             <Route path="/quanlyxinnghi" element={<QuanLyXinNghi />} />
             <Route path="/quanlykhieunai" element={<QuanLyKhieuNai />} />
             <Route path="/guithongbao" element={<GuiThongBao />} />
-            <Route path="/quanlykhoahoc" element={<QuanLyKhoaHoc />} /> {/* Trang quản lý khóa học cho admin */}
-            <Route path="/quanlydanhgia" element={<QuanLyDanhGia />} /> {/* Trang quản lý đánh giá cho admin */}
+            <Route path="/quanlykhoahoc" element={<QuanLyKhoaHoc />} />
+            <Route path="/quanlydanhgia" element={<QuanLyDanhGia />} />
+            <Route path="/quanlyluongthuong" element={<QuanLyLuongThuong />} />
+            <Route path="/quanlyphucloi" element={<QuanLyPhucLoi />} />
+            <Route path="/quanlytuyendung" element={<QuanLyTuyenDung />} />
+            <Route path="/quanlycauhinh" element={<QuanLyCauHinh />} />
+            <Route path="/quanlyhopdong" element={<QuanLyHopDong />} />
+            <Route path="/hopdongsaphethan" element={<HopDongSapHetHan />} /> 
           </Route>
 
           <Route path="*" element={

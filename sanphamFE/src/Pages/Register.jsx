@@ -4,6 +4,16 @@ import { User, Mail, Lock, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../Context/AuthContext';
 
+const pageAnimation = `
+    @keyframes fadeInScale {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    .animate-fadeInScale {
+        animation: fadeInScale 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+`;
+
 const RegisterPage = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -40,14 +50,18 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-            <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 hover:scale-105 relative"> {/* Added relative for positioning */}
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-100 to-sky-100 p-4">
+            <style>{pageAnimation}</style>
+            <div className="animate-fadeInScale bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all duration-300 hover:shadow-2xl relative">
                 <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-blue-600 transition-colors duration-200">
                     <ArrowLeft size={24} />
                 </Link>
-                <h2 className="text-4xl font-extrabold text-center text-gray-800 mb-8 drop-shadow-sm mt-4"> {/* Adjusted margin-top */}
+                <h2 className="text-4xl font-extrabold text-center text-blue-700 mb-2 drop-shadow-sm mt-4">
                     Đăng ký
                 </h2>
+                <p className="text-center text-gray-500 mb-8">
+                    Chào mừng bạn đến với chúng tôi! Vui lòng điền thông tin để tạo tài khoản.
+                </p>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                         <Input
@@ -56,7 +70,7 @@ const RegisterPage = () => {
                             prefix={<User className="text-gray-400" size={18} />}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
-                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                             required
                         />
                     </div>
@@ -67,7 +81,7 @@ const RegisterPage = () => {
                             prefix={<Mail className="text-gray-400" size={18} />}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                             type="email"
                             required
                         />
@@ -79,7 +93,7 @@ const RegisterPage = () => {
                             prefix={<Lock className="text-gray-400" size={18} />}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                             required
                         />
                     </div>
@@ -90,7 +104,7 @@ const RegisterPage = () => {
                             prefix={<Lock className="text-gray-400" size={18} />}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                            className="rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors duration-200"
                             required
                         />
                     </div>
@@ -99,7 +113,7 @@ const RegisterPage = () => {
                         htmlType="submit"
                         size="large"
                         loading={loading}
-                        className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 shadow-lg transition-all duration-300 transform hover:-translate-y-1"
+                        className="w-full rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 shadow-lg transition-all duration-300 transform hover:scale-105"
                     >
                         Đăng ký
                     </Button>

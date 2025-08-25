@@ -1,14 +1,15 @@
-// frontend/src/Pages/GuiThongBao.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
-import { Button, message, Spin, Form, Input, Select, Table, Tag, Checkbox, Empty, Modal } from 'antd'; // Thêm Modal
+import { Button, message, Spin, Form, Input, Select, Table, Tag, Checkbox, Empty, Modal, Card, Typography } from 'antd';
+import { Send, History, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 const { TextArea } = Input;
 const { Option } = Select;
+const { Title, Text } = Typography;
 
 const GuiThongBao = () => {
     const { user, loading: authLoading } = useAuth();
@@ -16,14 +17,13 @@ const GuiThongBao = () => {
     const [loadingSubmit, setLoadingSubmit] = useState(false);
     const [sentNotifications, setSentNotifications] = useState([]);
     const [loadingSentNotifications, setLoadingSentNotifications] = useState(true);
-    const [allUsers, setAllUsers] = useState([]); // Danh sách tất cả người dùng để chọn người nhận cụ thể
+    const [allUsers, setAllUsers] = useState([]);
     const [loadingUsers, setLoadingUsers] = useState(true);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false); // State cho modal xóa
-    const [notificationToDelete, setNotificationToDelete] = useState(null); // Thông báo cần xóa
+    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+    const [notificationToDelete, setNotificationToDelete] = useState(null);
 
     const API_URL = 'http://localhost:5000/api/auth';
 
-    // Hàm lấy danh sách tất cả người dùng (để admin chọn người nhận cụ thể)
     const fetchAllUsers = useCallback(async () => {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -38,13 +38,6 @@ const GuiThongBao = () => {
                 },
             };
             const res = await axios.get(`${API_URL}/users`, config);
-            console.log("Fetched raw data:", res.data); // Log toàn bộ dữ liệu trả về
-            console.log("Fetched users (res.data.users):", res.data.users); // Log thuộc tính users
-
-            // Cập nhật dòng này để xử lý linh hoạt hơn
-            // Nếu res.data.users là một mảng, sử dụng nó
-            // Nếu res.data là một mảng (tức là backend trả về trực tiếp mảng), sử dụng nó
-            // Nếu không, mặc định là mảng rỗng
             setAllUsers(Array.isArray(res.data.users) ? res.data.users : Array.isArray(res.data) ? res.data : []);
         } catch (error) {
             console.error('Lỗi khi tải danh sách người dùng:', error);
@@ -54,7 +47,6 @@ const GuiThongBao = () => {
         }
     }, []);
 
-    // Hàm lấy lịch sử thông báo đã gửi
     const fetchSentNotifications = useCallback(async () => {
         if (!user || user.role !== 'admin') return;
 
@@ -100,15 +92,6 @@ const GuiThongBao = () => {
 
         const { receiverId, messageContent, sendToAllUsers, sendToAllAdmins } = values;
 
-        // Log giá trị để kiểm tra
-        console.log("Form values on submit:", values);
-        console.log("receiverId:", receiverId);
-        console.log("sendToAllUsers:", sendToAllUsers);
-        console.log("sendToAllAdmins:", sendToAllAdmins);
-
-
-        // Đảm bảo ít nhất một tùy chọn gửi được chọn
-        // Kiểm tra receiverId có giá trị và không phải là chuỗi rỗng
         if (!receiverId && !sendToAllUsers && !sendToAllAdmins) {
             message.error('Vui lòng chọn ít nhất một người nhận hoặc nhóm người nhận.');
             setLoadingSubmit(false);
@@ -125,15 +108,15 @@ const GuiThongBao = () => {
 
             const payload = {
                 message: messageContent,
-                receiverId: receiverId || null, // Gửi null nếu không chọn người cụ thể
+                receiverId: receiverId || null,
                 sendToAllUsers: sendToAllUsers || false,
                 sendToAllAdmins: sendToAllAdmins || false,
             };
 
             const res = await axios.post(`${API_URL}/notifications/send`, payload, config);
             message.success(res.data.message);
-            form.resetFields(); // Reset form sau khi gửi thành công
-            fetchSentNotifications(); // Cập nhật lại lịch sử thông báo đã gửi
+            form.resetFields();
+            fetchSentNotifications();
         } catch (error) {
             console.error('Lỗi khi gửi thông báo:', error);
             message.error(error.response?.data?.message || 'Gửi thông báo thất bại.');
@@ -142,13 +125,11 @@ const GuiThongBao = () => {
         }
     };
 
-    // Hàm hiển thị modal xác nhận xóa
     const showDeleteConfirmModal = (record) => {
         setNotificationToDelete(record);
         setIsDeleteModalVisible(true);
     };
 
-    // Hàm xử lý xóa thông báo
     const handleDeleteNotification = async () => {
         if (!notificationToDelete) return;
 
@@ -170,7 +151,7 @@ const GuiThongBao = () => {
             message.success('Thông báo đã được xóa thành công.');
             setIsDeleteModalVisible(false);
             setNotificationToDelete(null);
-            fetchSentNotifications(); // Cập nhật lại lịch sử
+            fetchSentNotifications();
         } catch (error) {
             console.error('Lỗi khi xóa thông báo:', error);
             message.error(error.response?.data?.message || 'Xóa thông báo thất bại.');
@@ -184,19 +165,26 @@ const GuiThongBao = () => {
             title: 'Người nhận',
             dataIndex: ['receiver', 'name'],
             key: 'receiverName',
-            // Sử dụng render để hiển thị tên người nhận hoặc nhóm
+            width: 250,
             render: (text, record) => {
                 if (record.receiver) {
-                    return `${record.receiver.name} (${record.receiver.email}) - ${record.receiver.role}`;
+                    return (
+                        <div className="flex flex-col">
+                            <span className="font-medium text-gray-800">
+                                {record.receiver.name || 'N/A'} {record.receiver.position ? `(${record.receiver.position})` : ''}
+                            </span>
+                            {record.receiver.email && (
+                                <span className="text-gray-500 text-sm italic">
+                                    {record.receiver.email}
+                                </span>
+                            )}
+                        </div>
+                    );
                 } else if (record.type === 'admin_message' && !record.receiver) {
-                    // Trường hợp thông báo gửi cho tất cả user/admin mà không có receiver cụ thể
-                    // Điều này xảy ra nếu backend không populate receiver cho các thông báo gửi đến nhóm
-                    // Hoặc nếu notification.receiver là null
                     return record.receiverRole === 'admin' ? 'Tất cả Admin' : 'Tất cả User';
                 }
                 return 'N/A';
             },
-            width: 250, // Tăng chiều rộng để hiển thị đủ thông tin
         },
         {
             title: 'Vai trò người nhận',
@@ -244,10 +232,10 @@ const GuiThongBao = () => {
             fixed: 'right',
             render: (text, record) => (
                 <Button
-                    type="primary"
+                    icon={<Trash2 size={16} />}
                     danger
                     onClick={() => showDeleteConfirmModal(record)}
-                    className="bg-red-500 hover:bg-red-600 rounded-lg"
+                    className="rounded-lg"
                 >
                     Xóa
                 </Button>
@@ -277,18 +265,20 @@ const GuiThongBao = () => {
 
     return (
         <SBNV>
-            <div className="flex flex-col items-center flex-1 bg-gradient-to-br from-slate-50 to-slate-200 p-4">
+            <div className="flex flex-col items-center flex-1 min-h-screen bg-gradient-to-br from-slate-50 to-slate-200 p-6 font-sans">
                 <div className="text-center mb-8">
-                    <h1 className="text-5xl font-black text-blue-700 drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)] mb-4">
+                    <Title level={1} className="!text-blue-700 !font-bold drop-shadow-sm mb-2">
                         Gửi Thông Báo
-                    </h1>
-                    <p className="text-xl text-gray-700">
-                        Chào mừng <span className="text-sky-600 font-bold">{user.name}</span>!
-                    </p>
+                    </Title>
+                    <Text className="text-lg text-gray-700">
+                        Chào mừng <span className="text-sky-600 font-bold">{user.name}</span>! Gửi thông báo đến người dùng hoặc toàn bộ hệ thống.
+                    </Text>
                 </div>
 
-                <div className="w-full max-w-3xl mt-8 bg-white p-8 rounded-lg shadow-xl mb-12">
-                    <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Tạo Thông Báo Mới</h2>
+                <Card
+                    title={<span className="flex items-center text-xl font-semibold text-gray-800"><Send size={20} className="mr-2" /> Tạo Thông Báo Mới</span>}
+                    className="w-full max-w-3xl shadow-xl rounded-xl bg-white p-6 mb-8"
+                >
                     <Form
                         form={form}
                         layout="vertical"
@@ -313,20 +303,19 @@ const GuiThongBao = () => {
                                     showSearch
                                     placeholder="Chọn người nhận cụ thể (tùy chọn)"
                                     optionFilterProp="children"
-                                    value={form.getFieldValue('receiverId')} // Explicitly control value
+                                    allowClear
                                     filterOption={(input, option) => {
                                         const childrenText = Array.isArray(option.children)
                                             ? option.children.map(child =>
                                                 typeof child === 'string' ? child : ''
-                                              ).join('')
+                                            ).join('')
                                             : String(option.children || '');
                                         return childrenText.toLowerCase().includes(input.toLowerCase());
                                     }}
-                                    allowClear
                                 >
                                     {allUsers.map(u => (
                                         <Option key={u._id} value={u._id}>
-                                            {u.name} ({u.email}) - {u.role}
+                                            {u.name} ({u.email}) - {u.role} {u.position ? `(${u.position})` : ''}
                                         </Option>
                                     ))}
                                 </Select>
@@ -340,16 +329,18 @@ const GuiThongBao = () => {
                             <Checkbox>Gửi cho tất cả quản trị viên (Admin)</Checkbox>
                         </Form.Item>
 
-                        <Form.Item>
-                            <Button type="primary" htmlType="submit" loading={loadingSubmit} className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        <Form.Item className="mt-6">
+                            <Button type="primary" htmlType="submit" loading={loadingSubmit} className="w-full h-10 text-lg bg-blue-600 hover:bg-blue-700 rounded-lg">
                                 Gửi Thông Báo
                             </Button>
                         </Form.Item>
                     </Form>
-                </div>
+                </Card>
 
-                <div className="w-full max-w-6xl bg-white p-8 rounded-lg shadow-xl">
-                    <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Lịch Sử Thông Báo Đã Gửi</h2>
+                <Card
+                    title={<span className="flex items-center text-xl font-semibold text-gray-800"><History size={20} className="mr-2" /> Lịch Sử Thông Báo Đã Gửi</span>}
+                    className="w-full max-w-6xl shadow-xl rounded-xl bg-white p-6"
+                >
                     {loadingSentNotifications ? (
                         <div className="flex items-center justify-center py-8">
                             <Spin size="large" tip="Đang tải lịch sử thông báo đã gửi..." />
@@ -368,24 +359,23 @@ const GuiThongBao = () => {
                             <Empty description="Không có thông báo nào được gửi." />
                         )
                     )}
-                </div>
-            </div>
+                </Card>
 
-            {/* Modal xác nhận xóa thông báo */}
-            <Modal
-                title="Xác nhận xóa thông báo"
-                open={isDeleteModalVisible}
-                onOk={handleDeleteNotification}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Xóa"
-                cancelText="Hủy"
-                okButtonProps={{ danger: true }}
-            >
-                <p>Bạn có chắc chắn muốn xóa thông báo này không?</p>
-                {notificationToDelete && (
-                    <p>Nội dung: <strong>"{notificationToDelete.message}"</strong></p>
-                )}
-            </Modal>
+                <Modal
+                    title="Xác nhận xóa thông báo"
+                    open={isDeleteModalVisible}
+                    onOk={handleDeleteNotification}
+                    onCancel={() => setIsDeleteModalVisible(false)}
+                    okText="Xóa"
+                    cancelText="Hủy"
+                    okButtonProps={{ danger: true }}
+                >
+                    <p>Bạn có chắc chắn muốn xóa thông báo này không?</p>
+                    {notificationToDelete && (
+                        <p>Nội dung: <strong>"{notificationToDelete.message}"</strong></p>
+                    )}
+                </Modal>
+            </div>
         </SBNV>
     );
 };

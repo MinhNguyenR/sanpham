@@ -5,7 +5,7 @@ const attendanceSchema = mongoose.Schema(
         user: {
             type: mongoose.Schema.Types.ObjectId,
             required: true,
-            ref: 'User', 
+            ref: 'User',
         },
         name: {
             type: String,
@@ -19,26 +19,36 @@ const attendanceSchema = mongoose.Schema(
             type: String,
             required: true,
         },
+        position: {
+            type: String,
+        },
+        date: {
+            type: String, // Định dạng YYYY-MM-DD
+            required: true,
+        },
         checkInTime: {
             type: Date,
-            required: true,
-            default: Date.now,
         },
-        date: { 
-            type: String,
-            required: true,
-        },
-        isLeave: { 
+        isLeave: {
             type: Boolean,
             default: false,
         },
-        leaveReason: { 
+        leaveReason: {
             type: String,
-            default: '',
+        },
+        markedBy: { // Thêm trường này
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
+        markedByName: { // Thêm trường này để lưu tên người đánh dấu
+            type: String,
+        },
+        markedAt: { // Thêm trường này để lưu thời gian đánh dấu
+            type: Date,
         },
     },
     {
-        timestamps: true, 
+        timestamps: true,
     }
 );
 

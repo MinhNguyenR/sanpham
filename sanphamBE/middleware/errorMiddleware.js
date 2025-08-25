@@ -1,5 +1,3 @@
-// backend/middleware/errorMiddleware.js
-
 // Middleware để xử lý lỗi 404 (Not Found)
 const notFound = (req, res, next) => {
     const error = new Error(`Not Found - ${req.originalUrl}`);

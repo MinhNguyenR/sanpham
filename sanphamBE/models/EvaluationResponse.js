@@ -21,6 +21,10 @@ const evaluationResponseSchema = mongoose.Schema(
             type: String,
             required: true,
         },
+        userPosition: { // <-- ĐÃ ĐỔI TÊN Ở ĐÂY
+            type: String,
+            required: true, // Hoặc true tùy theo logic của bạn
+        },
         answers: [ // Mảng các câu trả lời
             {
                 questionId: { // ID của câu hỏi trong form gốc

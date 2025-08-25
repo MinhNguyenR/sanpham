@@ -1,9 +1,8 @@
-// frontend/src/Pages/QuanLyKhoaHoc.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
 import { Button, message, Spin, Form, Input, Select, Table, Modal, Empty, Tag, Tabs } from 'antd';
-import { Edit, Trash2, PlusCircle, Eye, CheckCircle, XCircle, User as UserIcon, Mail as MailIcon, Phone as PhoneIcon, FileText as FileTextIcon } from 'lucide-react'; // Đổi tên User thành UserIcon, Mail thành MailIcon, Phone thành PhoneIcon, FileText thành FileTextIcon
+import { Edit, Trash2, PlusCircle, Eye, BriefcaseIcon, CheckCircle, XCircle, User as UserIcon, Mail as MailIcon, Phone as PhoneIcon, FileText as FileTextIcon } from 'lucide-react'; // Đổi tên User thành UserIcon, Mail thành MailIcon, Phone thành PhoneIcon, FileText thành FileTextIcon
 import axios from 'axios';
 import { format, addHours, isBefore } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -18,22 +17,22 @@ const QuanLyKhoaHoc = () => {
     const { user, loading: authLoading } = useAuth();
     const [form] = Form.useForm();
     const [loadingSubmit, setLoadingSubmit] = useState(false);
-    const [courses, setCourses] = useState([]); // Giữ nguyên để có thể dùng nếu cần sau này
-    const [loadingCourses, setLoadingCourses] = useState(true); // Giữ nguyên
+    const [courses, setCourses] = useState([]); 
+    const [loadingCourses, setLoadingCourses] = useState(true); 
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [editingCourse, setEditingCourse] = useState(null);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [courseToDelete, setCourseToDelete] = useState(null);
-    const [allUsers, setAllUsers] = useState([]); // Danh sách tất cả người dùng để chọn người phụ trách
+    const [allUsers, setAllUsers] = useState([]); 
     const [loadingUsers, setLoadingUsers] = useState(true);
-    const [adminCreatedCourses, setAdminCreatedCourses] = useState([]); // Khóa học do admin hiện tại tạo
+    const [adminCreatedCourses, setAdminCreatedCourses] = useState([]);
     const [loadingAdminCreatedCourses, setLoadingAdminCreatedCourses] = useState(true);
-    const [allCourseRegistrations, setAllCourseRegistrations] = useState([]); // Tất cả đăng ký cho các khóa học của admin
+    const [allCourseRegistrations, setAllCourseRegistrations] = useState([]); 
     const [loadingAllCourseRegistrations, setLoadingAllCourseRegistrations] = useState(true);
     const [isRegistrationDetailModalVisible, setIsRegistrationDetailModalVisible] = useState(false);
     const [selectedRegistration, setSelectedRegistration] = useState(null);
     const [loadingRegistrationUpdate, setLoadingRegistrationUpdate] = useState(false);
-    const [activeTab, setActiveTab] = useState('manageCourses'); // Mặc định tab quản lý khóa học
+    const [activeTab, setActiveTab] = useState('manageCourses'); 
 
     // Hàm lấy danh sách tất cả người dùng (để chọn người phụ trách)
     const fetchAllUsers = useCallback(async () => {
@@ -50,7 +49,6 @@ const QuanLyKhoaHoc = () => {
                 },
             };
             const res = await axios.get(`${API_URL}/users`, config);
-            // Đảm bảo res.data.users là một mảng, nếu không thì dùng mảng rỗng
             setAllUsers(Array.isArray(res.data.users) ? res.data.users : []);
         } catch (error) {
             console.error('Lỗi khi tải danh sách người dùng:', error);
@@ -225,16 +223,14 @@ const QuanLyKhoaHoc = () => {
         setSelectedRegistration(null);
     };
 
-    // Cập nhật hàm handleUpdateRegistrationStatus để nhận đối tượng `record`
     const handleUpdateRegistrationStatus = async (status, recordToUpdate) => {
-        console.log('Attempting to update registration status:', status, 'for record:', recordToUpdate); // Log để debug
+        console.log('Attempting to update registration status:', status, 'for record:', recordToUpdate); 
         if (!recordToUpdate) {
             console.error('Record to update is undefined.');
             message.error('Không tìm thấy thông tin đăng ký để cập nhật.');
             return;
         }
 
-        // Đặt selectedRegistration để loading state hoạt động đúng cho nút cụ thể
         setSelectedRegistration(recordToUpdate);
         setLoadingRegistrationUpdate(true);
 
@@ -253,7 +249,7 @@ const QuanLyKhoaHoc = () => {
                 },
             };
             const response = await axios.put(`${API_URL}/training-courses/registrations/${recordToUpdate._id}/status`, { status }, config);
-            console.log('API Response for status update:', response.data); // Log phản hồi từ API
+            console.log('API Response for status update:', response.data); 
 
             message.success(`Đăng ký đã được ${status === 'approved' ? 'duyệt' : 'từ chối'} thành công.`);
             setIsRegistrationDetailModalVisible(false); // Đóng modal nếu đang mở
@@ -264,12 +260,10 @@ const QuanLyKhoaHoc = () => {
             message.error(error.response?.data?.message || 'Cập nhật trạng thái thất bại.');
         } finally {
             setLoadingRegistrationUpdate(false);
-            // Đảm bảo selectedRegistration được reset để loading state không bị kẹt
             setSelectedRegistration(null);
         }
     };
 
-    // Hàm trợ giúp để render Tag trạng thái đăng ký
     const getRegistrationStatusTag = (status) => {
         let color = 'gold';
         if (status === 'approved') color = 'green';
@@ -283,28 +277,38 @@ const QuanLyKhoaHoc = () => {
             title: 'Tiêu đề',
             dataIndex: 'title',
             key: 'title',
-            width: 200,
+            width: 150, 
             ellipsis: true,
         },
         {
             title: 'Tổng quan',
             dataIndex: 'overview',
             key: 'overview',
-            width: 300,
+            width: 250, 
             ellipsis: true,
         },
         {
             title: 'Người phụ trách',
             dataIndex: ['mainInCharge', 'name'],
             key: 'mainInCharge',
-            width: 150,
-            render: (text, record) => record.mainInCharge?.name || 'N/A',
+            width: 200, 
+            render: (text, record) => {
+                const name = record.mainInCharge?.name || 'N/A';
+                const email = record.mainInCharge?.email;
+                const position = record.mainInCharge?.position;
+                return (
+                    <div>
+                        {name} {email ? `(${email})` : ''}
+                        {position && <p className="text-gray-500 text-sm italic mb-0">{position}</p>}
+                    </div>
+                );
+            },
         },
         {
             title: 'Thời gian chi tiết',
             dataIndex: 'detailedTime',
             key: 'detailedTime',
-            width: 200,
+            width: 180, 
             ellipsis: true,
         },
         {
@@ -312,12 +316,12 @@ const QuanLyKhoaHoc = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text) => text ? format(new Date(text), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A',
-            width: 180,
+            width: 150,
         },
         {
             title: 'Hành động',
             key: 'action',
-            width: 150,
+            width: 120, 
             fixed: 'right',
             render: (text, record) => (
                 <div className="flex space-x-2">
@@ -347,52 +351,52 @@ const QuanLyKhoaHoc = () => {
             title: 'Khóa học',
             dataIndex: ['course', 'title'],
             key: 'courseTitle',
-            width: 200,
+            width: 180, 
             ellipsis: true,
             render: (text, record) => record.course?.title || 'N/A',
         },
         {
             title: 'Người đăng ký',
-            dataIndex: ['user', 'name'],
+            dataIndex: ['user', 'name'], 
             key: 'userName',
-            width: 150,
-            // Đảm bảo kiểm tra record.user trước khi truy cập các thuộc tính
+            width: 180, 
+            ellipsis: true, 
             render: (text, record) => {
-                // console.log('Record user in render:', record.user); // Giữ log này để kiểm tra
-                // Sử dụng optional chaining và nullish coalescing cho an toàn
-                return record.user?.name ? `${record.user.name} (${record.user.email || 'N/A'})` : (record.user?.email || 'N/A (Người dùng không tồn tại)');
+                const name = record.user?.name || 'N/A';
+                const email = record.user?.email || ''; 
+                const position = record.user?.position || '';
+                return (
+                    <div>
+                        {name} {email ? `(${email})` : ''}
+                        {position && <p className="text-gray-500 text-sm italic mb-0">{position}</p>}
+                    </div>
+                );
             },
         },
         {
             title: 'SĐT',
             dataIndex: 'phoneNumber',
             key: 'phoneNumber',
-            width: 120,
-        },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-            width: 180,
+            width: 100, 
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             width: 120,
-            render: (status) => getRegistrationStatusTag(status), // Sử dụng hàm trợ giúp
+            render: (status) => getRegistrationStatusTag(status), 
         },
         {
             title: 'Ngày đăng ký',
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text) => text ? format(new Date(text), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A',
-            width: 180,
+            width: 150, 
         },
         {
             title: 'Hành động',
             key: 'action',
-            width: 180, // Tăng chiều rộng để chứa 3 nút
+            width: 180, 
             fixed: 'right',
             render: (text, record) => (
                 <div className="flex space-x-2">
@@ -408,20 +412,18 @@ const QuanLyKhoaHoc = () => {
                             <Button
                                 type="primary"
                                 icon={<CheckCircle size={16} />}
-                                onClick={() => handleUpdateRegistrationStatus('approved', record)} // Truyền record
+                                onClick={() => handleUpdateRegistrationStatus('approved', record)}
                                 className="bg-green-500 hover:bg-green-600 rounded-lg"
                                 title="Duyệt"
-                                // Sử dụng record._id để kiểm tra loading cho nút cụ thể
                                 loading={loadingRegistrationUpdate && selectedRegistration?._id === record._id}
                             />
                             <Button
                                 type="primary"
                                 danger
                                 icon={<XCircle size={16} />}
-                                onClick={() => handleUpdateRegistrationStatus('rejected', record)} // Truyền record
+                                onClick={() => handleUpdateRegistrationStatus('rejected', record)} 
                                 className="bg-red-500 hover:bg-red-600 rounded-lg"
                                 title="Từ chối"
-                                // Sử dụng record._id để kiểm tra loading cho nút cụ thể
                                 loading={loadingRegistrationUpdate && selectedRegistration?._id === record._id}
                             />
                         </>
@@ -642,7 +644,7 @@ const QuanLyKhoaHoc = () => {
                         <Button
                             key="approve"
                             type="primary"
-                            onClick={() => handleUpdateRegistrationStatus('approved', selectedRegistration)} // Truyền selectedRegistration
+                            onClick={() => handleUpdateRegistrationStatus('approved', selectedRegistration)} 
                             loading={loadingRegistrationUpdate && selectedRegistration?._id === selectedRegistration._id}
                             icon={<CheckCircle size={16} />}
                             className="bg-green-600 hover:bg-green-700 rounded-lg"
@@ -659,6 +661,9 @@ const QuanLyKhoaHoc = () => {
                         <p className="flex items-center mb-2"><UserIcon size={18} className="mr-2 text-blue-500" /> <strong>Họ và tên:</strong>&nbsp;{selectedRegistration.fullName}</p>
                         <p className="flex items-center mb-2"><MailIcon size={18} className="mr-2 text-blue-500" /> <strong>Email:</strong>&nbsp;{selectedRegistration.email}</p>
                         <p className="flex items-center mb-2"><PhoneIcon size={18} className="mr-2 text-blue-500" /> <strong>Số điện thoại:</strong>&nbsp;{selectedRegistration.phoneNumber}</p>
+                        {selectedRegistration.user?.position && ( 
+                            <p className="flex items-center mb-2"><BriefcaseIcon size={18} className="mr-2 text-blue-500" /> <strong>Chức vụ:</strong>&nbsp;{selectedRegistration.user.position}</p>
+                        )}
                         <p className="flex items-start mb-2"><FileTextIcon size={18} className="mr-2 text-blue-500" /> <strong>Ghi chú:</strong>&nbsp;{selectedRegistration.notes || 'Không có'}</p>
                         <p className="flex items-center mb-2"><strong>Khóa học:</strong>&nbsp;{selectedRegistration.course?.title || 'N/A'}</p>
                         <p className="flex items-center mb-2"><strong>Trạng thái:</strong>&nbsp;{getRegistrationStatusTag(selectedRegistration.status)}</p>

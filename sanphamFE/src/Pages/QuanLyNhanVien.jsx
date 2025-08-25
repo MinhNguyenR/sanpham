@@ -1,27 +1,27 @@
-// frontend/src/Pages/QuanLyNhanVien.jsx
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, Modal, Form, Input, Select, message, Button, Tag, Spin } from "antd"; // Import Tag và Spin
-import { Plus, Edit, Trash2, Search as SearchIcon } from "lucide-react"; // Import SearchIcon
+import { Table, Modal, Form, Input, Select, message, Button, Tag, Spin } from "antd"; 
+import { Plus, Edit, Trash2, Search as SearchIcon } from "lucide-react"; 
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '../Context/AuthContext';
 import axios from "axios";
-import SBNV from '../ChucNang/sbnv'; // Import SBNV component
+import SBNV from '../ChucNang/sbnv'; 
+
 
 const { Option } = Select;
-const { Search } = Input; // Destructure Search from Input
+const { Search } = Input; 
 
 const QuanLyNhanVien = () => {
-    const { user, loading: authLoading } = useAuth(); // Đổi tên 'loading' thành 'authLoading' để tránh nhầm lẫn
+    const { user, loading: authLoading } = useAuth(); 
     const navigate = useNavigate();
-    const [employees, setEmployees] = useState([]); // Đổi tên 'users' thành 'employees' cho rõ ràng
-    const [loadingEmployees, setLoadingEmployees] = useState(true); // Thêm loading state cho bảng
-    const [isAddEditModalVisible, setIsAddEditModalVisible] = useState(false); // Gộp 2 modal thêm/sửa
+    const [employees, setEmployees] = useState([]); 
+    const [loadingEmployees, setLoadingEmployees] = useState(true); 
+    const [isAddEditModalVisible, setIsAddEditModalVisible] = useState(false); 
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const [form] = Form.useForm();
     const [deleteForm] = Form.useForm();
-    const [editingEmployee, setEditingEmployee] = useState(null); // Đổi tên 'editingUser'
-    const [deletingEmployee, setDeletingEmployee] = useState(null); // Đổi tên 'deletingUser'
-    const [searchTerm, setSearchTerm] = useState(''); // State cho từ khóa tìm kiếm
+    const [editingEmployee, setEditingEmployee] = useState(null); 
+    const [deletingEmployee, setDeletingEmployee] = useState(null); 
+    const [searchTerm, setSearchTerm] = useState(''); 
 
     // Hàm fetchUsers được đổi tên thành fetchEmployees cho rõ ràng và thêm searchTerm
     const fetchEmployees = useCallback(async (currentSearchTerm = '') => {
@@ -43,18 +43,14 @@ const QuanLyNhanVien = () => {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
-                params: { // Thêm params để gửi từ khóa tìm kiếm
+                params: { 
                     keyword: currentSearchTerm,
                 }
             };
-            // Gọi API /api/auth/users (backend sẽ cần được cập nhật để xử lý keyword)
             const { data } = await axios.get('/api/auth/users', config);
-            console.log("Fetched raw data for QuanLyNhanVien:", data); // Log dữ liệu thô
-            // Sửa lỗi: Backend trả về { users: [...] }
             if (data && Array.isArray(data.users)) {
                 setEmployees(data.users);
-            } else if (Array.isArray(data)) { // Trường hợp backend trả về trực tiếp mảng (ít xảy ra với cấu trúc hiện tại)
-                setEmployees(data);
+            } else if (Array.isArray(data)) { 
             } else {
                 console.warn("Dữ liệu nhận được từ API /api/auth/users không phải là mảng hoặc không có thuộc tính 'users':", data);
                 setEmployees([]);
@@ -75,11 +71,11 @@ const QuanLyNhanVien = () => {
             // Nếu không phải admin và đã tải xong auth, chuyển hướng
             navigate('/');
         }
-    }, [user, authLoading, navigate, fetchEmployees, searchTerm]); // Thêm searchTerm vào dependency array
+    }, [user, authLoading, navigate, fetchEmployees, searchTerm]); 
 
     const handleAddUser = () => {
         form.resetFields();
-        setEditingEmployee(null); // Đảm bảo là chế độ thêm mới
+        setEditingEmployee(null); 
         setIsAddEditModalVisible(true);
     };
 
@@ -87,7 +83,7 @@ const QuanLyNhanVien = () => {
         setEditingEmployee(record);
         form.setFieldsValue({
             ...record,
-            skills: Array.isArray(record.skills) ? record.skills.join(', ') : '' // Chuyển mảng skills thành chuỗi
+            skills: Array.isArray(record.skills) ? record.skills.join(', ') : '' 
         });
         setIsAddEditModalVisible(true);
     };
@@ -111,9 +107,7 @@ const QuanLyNhanVien = () => {
     };
 
     const handleFormSubmit = async (values) => {
-        setLoadingEmployees(true); // Bật loading cho toàn bộ bảng
-        console.log("Submitting form with values:", values); // LOG THÊM ĐỂ KIỂM TRA TẤT CẢ GIÁ TRỊ
-        console.log("Email value before sending:", values.email); // LOG CỤ THỂ CHO EMAIL
+        setLoadingEmployees(true); 
 
         try {
             const config = {
@@ -127,11 +121,10 @@ const QuanLyNhanVien = () => {
             if (dataToSend.skills && typeof dataToSend.skills === 'string') {
                 dataToSend.skills = dataToSend.skills.split(',').map(s => s.trim()).filter(s => s !== '');
             } else {
-                dataToSend.skills = []; // Ensure skills is an array even if empty
+                dataToSend.skills = [];
             }
 
             if (editingEmployee) {
-                // Remove password from update if it's empty
                 if (dataToSend.password === "") {
                     delete dataToSend.password;
                 }
@@ -146,19 +139,19 @@ const QuanLyNhanVien = () => {
                 message.success("Thêm tài khoản thành công!");
             }
 
-            fetchEmployees(searchTerm); // Refresh list with current search term
+            fetchEmployees(searchTerm); 
             handleModalCancel();
         } catch (error) {
             console.error('Lỗi khi thực hiện thao tác:', error);
             message.error(error.response?.data?.message || "Lỗi khi thực hiện thao tác.");
         } finally {
-            setLoadingEmployees(false); // Tắt loading
+            setLoadingEmployees(false); 
         }
     };
 
     const handleDelete = async (values) => {
         if (values.confirmation === 'delete' && deletingEmployee) {
-            setLoadingEmployees(true); // Bật loading
+            setLoadingEmployees(true); 
             try {
                 const config = {
                     headers: {
@@ -167,13 +160,13 @@ const QuanLyNhanVien = () => {
                 };
                 await axios.delete(`/api/auth/users/${deletingEmployee._id}`, config);
                 message.success("Xóa tài khoản thành công!");
-                fetchEmployees(searchTerm); // Refresh list with current search term
+                fetchEmployees(searchTerm); 
                 handleDeleteModalCancel();
             } catch (error) {
                 console.error('Lỗi khi xóa tài khoản:', error);
                 message.error(error.response?.data?.message || "Lỗi khi xóa tài khoản.");
             } finally {
-                setLoadingEmployees(false); // Tắt loading
+                setLoadingEmployees(false); 
             }
         } else {
             message.error("Vui lòng nhập 'delete' để xác nhận.");
@@ -182,7 +175,6 @@ const QuanLyNhanVien = () => {
 
     const handleSearch = (value) => {
         setSearchTerm(value);
-        // fetchEmployees(value); // Gọi fetch ngay khi search
     };
 
     const employeeColumns = [
@@ -208,6 +200,13 @@ const QuanLyNhanVien = () => {
                 </Tag>
             ),
             width: 100,
+        },
+        { 
+            title: 'Chức vụ',
+            dataIndex: 'position',
+            key: 'position',
+            width: 120,
+            render: (text) => text || 'N/A', // Hiển thị 'N/A' nếu không có chức vụ
         },
         {
             title: 'Biệt danh',
@@ -330,7 +329,7 @@ const QuanLyNhanVien = () => {
 
                 <Modal
                     title={editingEmployee ? "Chỉnh sửa tài khoản" : "Thêm tài khoản mới"}
-                    open={isAddEditModalVisible} // Sử dụng 'open' thay vì 'visible' cho Antd v5+
+                    open={isAddEditModalVisible} 
                     onCancel={handleModalCancel}
                     footer={null}
                 >
@@ -347,10 +346,10 @@ const QuanLyNhanVien = () => {
                             label="Email"
                             rules={[
                                 { required: true, message: 'Vui lòng nhập email!' },
-                                { type: 'email', message: 'Email không hợp lệ!' } // Đã thêm lại type: 'email'
+                                { type: 'email', message: 'Email không hợp lệ!' }
                             ]}
                             normalize={(value) => value.trim()} // Thêm normalize để loại bỏ khoảng trắng
-                            validateTrigger="onBlur" // Thêm validateTrigger
+                            validateTrigger="onBlur" 
                         >
                             <Input
                                 disabled={!!editingEmployee}
@@ -381,6 +380,10 @@ const QuanLyNhanVien = () => {
                                 <Option value="admin">Admin</Option>
                             </Select>
                         </Form.Item>
+                        {/* Thêm Form.Item cho chức vụ */}
+                        <Form.Item name="position" label="Chức vụ">
+                            <Input />
+                        </Form.Item>
                         <Form.Item name="nickname" label="Biệt danh">
                             <Input />
                         </Form.Item>
@@ -403,7 +406,7 @@ const QuanLyNhanVien = () => {
 
                 <Modal
                     title="Xác nhận xóa tài khoản"
-                    open={isDeleteModalVisible} // Sử dụng 'open' thay vì 'visible'
+                    open={isDeleteModalVisible} 
                     onCancel={handleDeleteModalCancel}
                     footer={null}
                 >

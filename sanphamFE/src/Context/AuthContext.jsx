@@ -1,7 +1,6 @@
-// frontend/src/Context/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { message } from 'antd'; // Import message for notifications
+import { message } from 'antd'; 
 
 const AuthContext = createContext(null);
 
@@ -64,12 +63,11 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
-    // Hàm uploadAvatar đã được xóa hoàn toàn
 
-    const updateUser = async (updatedData) => { // Đổi userData thành updatedData cho rõ ràng
+    const updateUser = async (updatedData) => { 
         try {
             const token = localStorage.getItem('token');
-            if (!token) { // Thêm kiểm tra token
+            if (!token) { 
                 throw new Error('Không có token xác thực. Vui lòng đăng nhập lại.');
             }
 
@@ -82,19 +80,17 @@ export const AuthProvider = ({ children }) => {
 
             const response = await axios.put(`${API_URL}/profile`, updatedData, config);
 
-            // Cập nhật state user với dữ liệu mới từ response của backend
-            setUser(response.data); // Backend nên trả về đối tượng user đã cập nhật
+            setUser(response.data);
 
             return { success: true, data: response.data };
         } catch (error) {
             console.error('Update profile error:', error.response?.data?.message || error.message);
-            // Sử dụng message của Ant Design để hiển thị lỗi
             message.error(error.response?.data?.message || 'Cập nhật thất bại');
             return { success: false, message: error.response?.data?.message || 'Cập nhật thất bại' };
         }
     };
 
-    // NEW: Hàm để xóa tài khoản
+    // Hàm để xóa tài khoản
     const deleteAccount = async () => {
         try {
             const token = localStorage.getItem('token');

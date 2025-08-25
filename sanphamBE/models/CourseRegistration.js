@@ -29,6 +29,10 @@ const courseRegistrationSchema = mongoose.Schema(
             required: true,
             trim: true,
         },
+        position: { // THÊM TRƯỜNG NÀY
+            type: String,
+            required: true, // Hoặc false tùy theo logic nghiệp vụ của bạn
+        },
         notes: {
             type: String,
             default: '',

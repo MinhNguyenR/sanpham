@@ -1,8 +1,8 @@
-// frontend/src/Pages/QLChamCong.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
-import { Button, message, Spin, Table, Tag, Modal, Input } from 'antd';
+import { Button, message, Spin, Table, Modal, Input } from 'antd';
+import { UserCheck, UserX, CalendarCheck, User, XCircle } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -21,14 +21,13 @@ const QLChamCong = () => {
     const [loadingAttendance, setLoadingAttendance] = useState(true);
     const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
-    const [currentRecordToUpdate, setCurrentRecordToUpdate] = useState(null); // Dùng cho cả đánh dấu và hủy nghỉ phép
+    const [currentRecordToUpdate, setCurrentRecordToUpdate] = useState(null);
     const [leaveReason, setLeaveReason] = useState('');
-    const [isMarkingNewLeave, setIsMarkingNewLeave] = useState(false); // Để phân biệt đánh dấu mới hay cập nhật
+    const [isMarkingNewLeave, setIsMarkingNewLeave] = useState(false); 
 
-    const API_URL = 'http://localhost:5000/api/auth'; // Đảm bảo đúng URL API
+    const API_URL = 'http://localhost:5000/api/auth';
 
-    // Hàm lấy dữ liệu chấm công cho Admin (chỉ còn lọc theo ngày)
-    const fetchAdminAttendanceData = async (date) => {
+    const fetchAdminAttendanceData = useCallback(async (date) => {
         if (!user || user.role !== 'admin') {
             setLoadingAttendance(false);
             return;
@@ -48,7 +47,6 @@ const QLChamCong = () => {
                     Authorization: `Bearer ${token}`,
                 },
             };
-            // URL chỉ còn lọc theo ngày
             const url = `${API_URL}/attendance/admin?date=${date}`;
 
             const res = await axios.get(url, config);
@@ -67,16 +65,15 @@ const QLChamCong = () => {
         } finally {
             setLoadingAttendance(false);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         if (!authLoading && user && user.role === 'admin') {
             fetchAdminAttendanceData(selectedDate);
         }
-    }, [user, authLoading, selectedDate]); // Bỏ searchQuery và searchType khỏi dependency array
+    }, [user, authLoading, selectedDate, fetchAdminAttendanceData]);
 
     const handleActionLeave = async () => {
-        // Thêm kiểm tra phòng thủ ở đây
         if (!currentRecordToUpdate) {
             message.error('Không có bản ghi nào được chọn để xử lý.');
             setIsLeaveModalOpen(false);
@@ -100,7 +97,6 @@ const QLChamCong = () => {
             };
 
             if (isMarkingNewLeave) {
-                // Đánh dấu nghỉ phép cho người chưa chấm công
                 const res = await axios.post(
                     `${API_URL}/attendance/mark-leave`,
                     {
@@ -112,20 +108,22 @@ const QLChamCong = () => {
                 );
                 message.success(res.data.message);
             } else {
-                // Cập nhật trạng thái nghỉ phép (hủy nghỉ phép)
                 const res = await axios.put(
-                    `${API_URL}/attendance/${currentRecordToUpdate._id}/leave`,
-                    { isLeave: !currentRecordToUpdate.isLeave, leaveReason: leaveReason },
+                    `${API_URL}/attendance/${currentRecordToUpdate._id}/leave`, 
+                    {
+                        isLeave: false,    
+                        leaveReason: null 
+                    },
                     config
                 );
                 message.success(res.data.message);
             }
 
             setIsLeaveModalOpen(false);
-            setLeaveReason('');
+            setLeaveReason(''); 
             setCurrentRecordToUpdate(null);
             setIsMarkingNewLeave(false);
-            fetchAdminAttendanceData(selectedDate); // Cập nhật lại dữ liệu admin
+            fetchAdminAttendanceData(selectedDate);
         } catch (error) {
             console.error('Lỗi khi thực hiện thao tác nghỉ phép:', error);
             message.error(error.response?.data?.message || 'Thao tác thất bại.');
@@ -136,14 +134,14 @@ const QLChamCong = () => {
 
     const showMarkLeaveModal = (record) => {
         setCurrentRecordToUpdate(record);
-        setLeaveReason(''); // Luôn reset lý do khi đánh dấu mới
+        setLeaveReason(''); 
         setIsMarkingNewLeave(true);
         setIsLeaveModalOpen(true);
     };
 
     const showUnmarkLeaveModal = (record) => {
         setCurrentRecordToUpdate(record);
-        setLeaveReason(record.leaveReason || ''); // Giữ lại lý do cũ nếu có
+        setLeaveReason(record.leaveReason || ''); 
         setIsMarkingNewLeave(false);
         setIsLeaveModalOpen(true);
     };
@@ -159,25 +157,30 @@ const QLChamCong = () => {
         setSelectedDate(e.target.value);
     };
 
-    // Cập nhật commonAttendanceColumns để truy cập thuộc tính lồng
     const commonAttendanceColumns = [
         {
             title: 'Tên',
-            dataIndex: ['user', 'name'], // Thay đổi để truy cập user.name
+            dataIndex: ['user', 'name'], 
             key: 'name',
-            render: (text, record) => record.user?.name || 'N/A' // Fallback nếu user null
+            render: (text, record) => record.user?.name || 'N/A' 
         },
         {
             title: 'Email',
-            dataIndex: ['user', 'email'], // Thay đổi để truy cập user.email
+            dataIndex: ['user', 'email'], 
             key: 'email',
-            render: (text, record) => record.user?.email || 'N/A' // Fallback nếu user null
+            render: (text, record) => record.user?.email || 'N/A' 
         },
         {
             title: 'Vai trò',
-            dataIndex: ['user', 'role'], // Thay đổi để truy cập user.role
+            dataIndex: ['user', 'role'], 
             key: 'role',
-            render: (text, record) => record.user?.role || 'N/A' // Fallback nếu user null
+            render: (text, record) => record.user?.role || 'N/A' 
+        },
+        {
+            title: 'Chức vụ',
+            dataIndex: ['user', 'position'],
+            key: 'position',
+            render: (text, record) => record.user?.position || 'N/A'
         },
     ];
 
@@ -194,8 +197,8 @@ const QLChamCong = () => {
     const onLeaveColumns = [
         ...commonAttendanceColumns,
         {
-            title: 'Ngày nghỉ phép', // Cột mới để hiển thị ngày nghỉ phép
-            dataIndex: 'checkInTime', // Sử dụng checkInTime vì backend đặt nó là ngày nghỉ phép
+            title: 'Ngày nghỉ phép', 
+            dataIndex: 'date', 
             key: 'leaveDate',
             render: (text) => text && new Date(text).toString() !== 'Invalid Date' ? format(new Date(text), 'dd/MM/yyyy', { locale: vi }) : 'N/A',
         },
@@ -211,6 +214,7 @@ const QLChamCong = () => {
             render: (text, record) => (
                 <Button
                     type="link"
+                    className="text-red-500 hover:text-red-700"
                     onClick={() => showUnmarkLeaveModal(record)}
                 >
                     Hủy nghỉ phép
@@ -219,7 +223,6 @@ const QLChamCong = () => {
         },
     ];
 
-    // notCheckedInColumns vẫn truy cập trực tiếp vì adminAttendanceData.notCheckedInAndNotOnLeaveUsers là mảng User objects
     const notCheckedInColumns = [
         {
             title: 'Tên',
@@ -237,11 +240,17 @@ const QLChamCong = () => {
             key: 'role',
         },
         {
+            title: 'Chức vụ',
+            dataIndex: 'position',
+            key: 'position',
+        },
+        {
             title: 'Hành động',
             key: 'action',
             render: (text, record) => (
                 <Button
                     type="link"
+                    className="text-blue-500 hover:text-blue-700"
                     onClick={() => showMarkLeaveModal(record)}
                 >
                     Đánh dấu nghỉ phép
@@ -253,7 +262,7 @@ const QLChamCong = () => {
     if (authLoading) {
         return (
             <SBNV>
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-screen bg-gray-50">
                     <Spin size="large" tip="Đang tải..." />
                 </div>
             </SBNV>
@@ -263,7 +272,7 @@ const QLChamCong = () => {
     if (!user || user.role !== 'admin') {
         return (
             <SBNV>
-                <div className="flex items-center justify-center h-full text-2xl text-red-600">
+                <div className="flex items-center justify-center h-screen text-2xl text-red-600 bg-gray-50">
                     Bạn không có quyền truy cập trang này.
                 </div>
             </SBNV>
@@ -272,25 +281,25 @@ const QLChamCong = () => {
 
     return (
         <SBNV>
-            <div className="flex flex-col items-center flex-1 bg-gradient-to-br from-slate-50 to-slate-200 p-4">
-                <div className="text-center mb-8">
-                    <h1 className="text-5xl font-black text-blue-700 drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)] mb-4">
+            <div className="container mx-auto p-4 md:p-8 lg:p-12 bg-gray-100 min-h-screen font-sans">
+                <div className="flex items-center justify-center text-center mb-10">
+                    <div className="flex items-center justify-center p-3 rounded-full bg-blue-500 text-white shadow-lg mr-4">
+                        <CalendarCheck size={40} />
+                    </div>
+                    <h1 className="text-4xl lg:text-5xl font-extrabold text-gray-800">
                         Quản Lý Chấm Công
                     </h1>
-                    <p className="text-xl text-gray-700">
-                        Chào mừng <span className="text-sky-600 font-bold">{user.name}</span>!
-                    </p>
                 </div>
 
-                <div className="w-full max-w-4xl mt-12 bg-white p-8 rounded-lg shadow-xl">
-                    <div className="mb-6 flex flex-wrap items-center justify-center gap-4">
-                        <label htmlFor="attendanceDate" className="text-lg font-medium text-gray-700">Chọn ngày:</label>
+                <div className="bg-white rounded-2xl shadow-xl p-6 mb-8">
+                    <div className="flex items-center justify-center mb-6">
+                        <label htmlFor="attendanceDate" className="text-lg font-medium text-gray-700 mr-4">Chọn ngày:</label>
                         <input
                             type="date"
                             id="attendanceDate"
                             value={selectedDate}
                             onChange={handleDateChange}
-                            className="p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="p-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200"
                         />
                     </div>
 
@@ -301,27 +310,31 @@ const QLChamCong = () => {
                     ) : (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 text-center">
-                                <div className="p-4 bg-blue-100 rounded-lg shadow-md">
-                                    <p className="text-lg font-medium text-blue-700">Tổng số người dùng</p>
-                                    <p className="text-4xl font-bold text-blue-900">{adminAttendanceData.totalUsers}</p>
+                                <div className="p-4 bg-blue-50 rounded-lg shadow-md flex flex-col items-center justify-center">
+                                    <User size={32} className="text-blue-600 mb-2"/>
+                                    <p className="text-sm font-medium text-blue-700">Tổng số người dùng</p>
+                                    <p className="text-3xl font-bold text-blue-900">{adminAttendanceData.totalUsers}</p>
                                 </div>
-                                <div className="p-4 bg-green-100 rounded-lg shadow-md">
-                                    <p className="text-lg font-medium text-green-700">Đã chấm công</p>
-                                    <p className="text-4xl font-bold text-green-900">{adminAttendanceData.totalCheckedIn}</p>
+                                <div className="p-4 bg-green-50 rounded-lg shadow-md flex flex-col items-center justify-center">
+                                    <UserCheck size={32} className="text-green-600 mb-2"/>
+                                    <p className="text-sm font-medium text-green-700">Đã chấm công</p>
+                                    <p className="text-3xl font-bold text-green-900">{adminAttendanceData.totalCheckedIn}</p>
                                 </div>
-                                <div className="p-4 bg-red-100 rounded-lg shadow-md">
-                                    <p className="text-lg font-medium text-red-700">Chưa chấm công</p>
-                                    <p className="text-4xl font-bold text-red-900">{adminAttendanceData.totalNotCheckedInAndNotOnLeave}</p>
+                                <div className="p-4 bg-red-50 rounded-lg shadow-md flex flex-col items-center justify-center">
+                                    <XCircle size={32} className="text-red-600 mb-2"/>
+                                    <p className="text-sm font-medium text-red-700">Chưa chấm công</p>
+                                    <p className="text-3xl font-bold text-red-900">{adminAttendanceData.totalNotCheckedInAndNotOnLeave}</p>
                                 </div>
-                                <div className="p-4 bg-yellow-100 rounded-lg shadow-md">
-                                    <p className="text-lg font-medium text-yellow-700">Nghỉ phép</p>
-                                    <p className="text-4xl font-bold text-yellow-900">
+                                <div className="p-4 bg-yellow-50 rounded-lg shadow-md flex flex-col items-center justify-center">
+                                    <UserX size={32} className="text-yellow-600 mb-2"/>
+                                    <p className="text-sm font-medium text-yellow-700">Nghỉ phép</p>
+                                    <p className="text-3xl font-bold text-yellow-900">
                                         {adminAttendanceData.totalOnLeave}
                                     </p>
                                 </div>
                             </div>
 
-                            <h3 className="text-2xl font-semibold text-gray-700 mb-4">Người đã chấm công ({adminAttendanceData.checkedInUsers.length})</h3>
+                            <h3 className="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Người đã chấm công ({adminAttendanceData.checkedInUsers.length})</h3>
                             <Table
                                 columns={checkedInColumns}
                                 dataSource={adminAttendanceData.checkedInUsers}
@@ -330,7 +343,7 @@ const QLChamCong = () => {
                                 className="mb-8 shadow-md rounded-lg overflow-hidden"
                             />
 
-                            <h3 className="text-2xl font-semibold text-gray-700 mb-4">Người nghỉ phép ({adminAttendanceData.onLeaveUsers.length})</h3>
+                            <h3 className="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Người nghỉ phép ({adminAttendanceData.onLeaveUsers.length})</h3>
                             <Table
                                 columns={onLeaveColumns}
                                 dataSource={adminAttendanceData.onLeaveUsers}
@@ -339,7 +352,7 @@ const QLChamCong = () => {
                                 className="mb-8 shadow-md rounded-lg overflow-hidden"
                             />
 
-                            <h3 className="text-2xl font-semibold text-gray-700 mb-4">Người chưa chấm công ({adminAttendanceData.notCheckedInAndNotOnLeaveUsers.length})</h3>
+                            <h3 className="text-2xl font-semibold text-gray-700 mb-4 border-b pb-2">Người chưa chấm công ({adminAttendanceData.notCheckedInAndNotOnLeaveUsers.length})</h3>
                             <Table
                                 columns={notCheckedInColumns}
                                 dataSource={adminAttendanceData.notCheckedInAndNotOnLeaveUsers}
@@ -361,7 +374,7 @@ const QLChamCong = () => {
                 >
                     {isMarkingNewLeave ? (
                         <>
-                            <p>Bạn có muốn đánh dấu **{currentRecordToUpdate?.name}** là nghỉ phép vào ngày **{format(new Date(selectedDate), 'dd/MM/yyyy')}** không?</p>
+                            <p>Bạn có muốn đánh dấu <span className="font-bold text-blue-600">{currentRecordToUpdate?.name}</span> là nghỉ phép vào ngày <span className="font-bold">{format(new Date(selectedDate), 'dd/MM/yyyy', { locale: vi })}</span> không?</p>
                             <Input
                                 placeholder="Nhập lý do nghỉ phép (tùy chọn)"
                                 value={leaveReason}
@@ -371,9 +384,9 @@ const QLChamCong = () => {
                         </>
                     ) : (
                         <>
-                            <p>Bạn có chắc muốn hủy đánh dấu nghỉ phép cho **{currentRecordToUpdate?.name}** vào ngày **{currentRecordToUpdate?.checkInTime && new Date(currentRecordToUpdate?.checkInTime).toString() !== 'Invalid Date' ? format(new Date(currentRecordToUpdate?.checkInTime), 'dd/MM/yyyy') : 'N/A'}** không?</p>
+                            <p>Bạn có chắc muốn hủy đánh dấu nghỉ phép cho <span className="font-bold text-blue-600">{currentRecordToUpdate?.name}</span> không?</p>
                             {currentRecordToUpdate?.leaveReason && (
-                                <p className="text-sm text-gray-600 mt-2">Lý do hiện tại: {currentRecordToUpdate.leaveReason}</p>
+                                <p className="text-sm text-gray-600 mt-2">Lý do hiện tại: <span className="italic">{currentRecordToUpdate.leaveReason}</span></p>
                             )}
                         </>
                     )}

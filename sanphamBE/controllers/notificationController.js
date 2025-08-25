@@ -1,10 +1,8 @@
-// backend/controllers/notificationController.js
 import asyncHandler from 'express-async-handler';
 import Notification from '../models/Notification.js';
-import User from '../models/User.js'; // Để lấy thông tin người dùng
+import User from '../models/User.js'; 
 
-// Hàm tạo thông báo chung (sử dụng nội bộ)
-const createNotification = async ({ sender, senderName, receiver, receiverRole, type, message, entityId = null, relatedDate = null }) => {
+const createNotification = async ({ io, sender, senderName, receiver, receiverRole, type, message, entityId = null, relatedDate = null }) => {
     try {
         const notification = await Notification.create({
             sender,
@@ -16,9 +14,12 @@ const createNotification = async ({ sender, senderName, receiver, receiverRole, 
             entityId,
             relatedDate,
         });
-        // Emit thông báo qua Socket.IO
-        // io.to(receiver.toString()).emit('newNotification', notification);
-        // Lưu ý: io sẽ được truyền vào từ server.js
+
+        // Emit thông báo qua Socket.IO cho người nhận cụ thể
+        if (io) {
+            io.to(receiver.toString()).emit('newNotification', notification);
+            console.log(`[Notification Controller] Emitted '${type}' to user ${receiver}`);
+        }
         return notification;
     } catch (error) {
         console.error('Lỗi khi tạo thông báo:', error);
@@ -26,23 +27,21 @@ const createNotification = async ({ sender, senderName, receiver, receiverRole, 
     }
 };
 
-// @desc    Lấy tất cả thông báo của người dùng hiện tại
-// @route   GET /api/auth/notifications/me
-// @access  Private (User & Admin)
 const getUserNotifications = asyncHandler(async (req, res) => {
     const notifications = await Notification.find({ receiver: req.user._id })
+        .populate('sender', 'name email position')
+        .populate('receiver', 'name email position')
         .sort({ createdAt: -1 })
-        .limit(50); // Giới hạn số lượng thông báo để tránh quá tải
+        .limit(50); 
 
     res.status(200).json(notifications);
 });
 
-// @desc    Admin gửi thông báo thủ công
-// @route   POST /api/auth/notifications/send
-// @access  Private (Admin only)
+
 const sendAdminNotification = asyncHandler(async (req, res) => {
-    const { receiverId, message, sendToAllUsers, sendToAllAdmins } = req.body; // Bỏ receiverRole vì sẽ lấy từ User model
-    const { _id: adminId, name: adminName } = req.user;
+    const { receiverId, message, sendToAllUsers, sendToAllAdmins } = req.body;
+    // Lấy thêm chức vụ của admin gửi thông báo
+    const { _id: adminId, name: adminName, position: adminPosition } = req.user; 
 
     if (!message) {
         res.status(400);
@@ -62,7 +61,6 @@ const sendAdminNotification = asyncHandler(async (req, res) => {
     if (receiverId) {
         const specificReceiver = await User.findById(receiverId);
         if (specificReceiver) {
-            // Kiểm tra xem người nhận cụ thể đã được thêm vào danh sách chưa để tránh trùng lặp
             if (!receivers.some(r => r._id.toString() === specificReceiver._id.toString())) {
                 receivers.push(specificReceiver);
             }
@@ -79,18 +77,19 @@ const sendAdminNotification = asyncHandler(async (req, res) => {
 
     const createdNotifications = [];
     for (const receiver of receivers) {
+        // Tùy chọn: Thêm chức vụ của admin vào tin nhắn gửi đi
+        const fullMessage = `Thông báo từ ${adminName} (${adminPosition}): ${message}`; 
         const notification = await createNotification({
+            io: req.io,
             sender: adminId,
             senderName: adminName,
             receiver: receiver._id,
-            receiverRole: receiver.role, // Lấy role từ đối tượng receiver
+            receiverRole: receiver.role,
             type: 'admin_message',
-            message: message,
+            message: fullMessage, 
         });
         if (notification) {
             createdNotifications.push(notification);
-            // Emit thông báo qua socket cho người nhận cụ thể
-            req.io.to(receiver._id.toString()).emit('newNotification', notification);
         }
     }
 
@@ -100,21 +99,15 @@ const sendAdminNotification = asyncHandler(async (req, res) => {
     });
 });
 
-// @desc    Lấy lịch sử thông báo đã gửi của Admin
-// @route   GET /api/auth/notifications/sent
-// @access  Private (Admin only)
 const getSentNotifications = asyncHandler(async (req, res) => {
     const sentNotifications = await Notification.find({ sender: req.user._id, type: 'admin_message' })
-        .populate('receiver', 'name email') // Lấy thông tin người nhận
+        .populate('receiver', 'name email position') 
         .sort({ createdAt: -1 })
         .limit(50);
 
     res.status(200).json(sentNotifications);
 });
 
-// @desc    Đánh dấu thông báo là đã đọc
-// @route   PUT /api/auth/notifications/:id/read
-// @access  Private (User & Admin)
 const markNotificationAsRead = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -125,7 +118,6 @@ const markNotificationAsRead = asyncHandler(async (req, res) => {
         throw new Error('Không tìm thấy thông báo.');
     }
 
-    // Đảm bảo chỉ người nhận thông báo mới có thể đánh dấu là đã đọc
     if (notification.receiver.toString() !== req.user._id.toString()) {
         res.status(403);
         throw new Error('Bạn không có quyền đánh dấu thông báo này.');
@@ -140,9 +132,6 @@ const markNotificationAsRead = asyncHandler(async (req, res) => {
     });
 });
 
-// @desc    Xóa thông báo đã gửi (chỉ Admin mới có thể xóa thông báo của mình)
-// @route   DELETE /api/auth/notifications/:id
-// @access  Private (Admin only)
 const deleteNotification = asyncHandler(async (req, res) => {
     const { id } = req.params;
 
@@ -153,24 +142,23 @@ const deleteNotification = asyncHandler(async (req, res) => {
         throw new Error('Không tìm thấy thông báo.');
     }
 
-    // Đảm bảo chỉ admin đã gửi thông báo mới có quyền xóa
-    // Hoặc nếu thông báo là của hệ thống và người dùng là admin
     if (notification.sender && notification.sender.toString() !== req.user._id.toString() || req.user.role !== 'admin') {
         res.status(403);
         throw new Error('Bạn không có quyền xóa thông báo này.');
     }
 
-    await notification.deleteOne(); // Sử dụng deleteOne() thay vì remove()
+    await notification.deleteOne();
 
     res.status(200).json({ message: 'Thông báo đã được xóa thành công.' });
 });
+
 const clearReadNotifications = asyncHandler(async (req, res) => {
     await Notification.deleteMany({ receiver: req.user._id, isRead: true });
     res.json({ message: 'Đã xóa tất cả thông báo đã đọc.' });
 });
 
 export {
-    createNotification, // Export để sử dụng nội bộ bởi các controller khác
+    createNotification,
     getUserNotifications,
     sendAdminNotification,
     getSentNotifications,

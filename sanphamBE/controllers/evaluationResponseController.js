@@ -1,17 +1,14 @@
-// backend/controllers/evaluationResponseController.js
 import asyncHandler from 'express-async-handler';
 import EvaluationForm from '../models/EvaluationForm.js';
 import EvaluationResponse from '../models/EvaluationResponse.js';
-import User from '../models/User.js'; // Import để populate thông tin người dùng
-import { createNotification } from './notificationController.js'; // Import hàm tạo thông báo
+import User from '../models/User.js';
+import { createNotification } from './notificationController.js'; 
 import { format } from 'date-fns';
 
-// @desc    Người dùng gửi phản hồi bản đánh giá
-// @route   POST /api/auth/evaluation-forms/:formId/submit-response
-// @access  User
+
 const submitEvaluationResponse = asyncHandler(async (req, res) => {
     const { formId } = req.params;
-    const { answers } = req.body; // answers là một mảng các đối tượng { questionId, questionText, answer }
+    const { answers } = req.body; 
 
     const form = await EvaluationForm.findById(formId);
 
@@ -54,7 +51,6 @@ const submitEvaluationResponse = asyncHandler(async (req, res) => {
 
         if (userAnswer) {
             // Thêm logic kiểm tra kiểu dữ liệu và giá trị cho từng loại câu hỏi nếu cần
-            // Ví dụ: kiểm tra min/max cho number/rating
             if ((q.questionType === 'number' || q.questionType === 'rating') && typeof userAnswer.answer !== 'number') {
                 res.status(400);
                 throw new Error(`Câu trả lời cho "${q.questionText}" phải là một số.`);
@@ -77,7 +73,6 @@ const submitEvaluationResponse = asyncHandler(async (req, res) => {
                 }
             }
 
-
             processedAnswers.push({
                 questionId: q._id,
                 questionText: q.questionText,
@@ -91,8 +86,9 @@ const submitEvaluationResponse = asyncHandler(async (req, res) => {
         user: req.user._id,
         userName: req.user.name,
         userEmail: req.user.email,
+        userPosition: req.user.position, 
         answers: processedAnswers,
-        status: 'pending', // Mặc định là đang chờ admin xem
+        status: 'pending', 
     });
 
     const createdResponse = await evaluationResponse.save();
@@ -106,7 +102,8 @@ const submitEvaluationResponse = asyncHandler(async (req, res) => {
             receiver: formCreator._id,
             receiverRole: 'admin',
             type: 'new_evaluation_response',
-            message: `${req.user.name} (${req.user.email}) đã hoàn thành bản đánh giá "${form.title}".`,
+            // Đã cập nhật tin nhắn thông báo để bao gồm position
+            message: `${req.user.name} (${req.user.email}, ${req.user.position}) đã hoàn thành bản đánh giá "${form.title}".`,
             entityId: createdResponse._id,
             relatedDate: format(new Date(), 'yyyy-MM-dd'),
         });
@@ -122,66 +119,90 @@ const submitEvaluationResponse = asyncHandler(async (req, res) => {
     res.status(201).json(createdResponse);
 });
 
-// @desc    Lấy tất cả các bản đánh giá mà người dùng hiện tại đã trả lời
-// @route   GET /api/auth/evaluation-responses/me
-// @access  User
 const getUserEvaluationResponses = asyncHandler(async (req, res) => {
-    const responses = await EvaluationResponse.find({ user: req.user._id })
-        .populate('form', 'title description dueDate creatorName') // Lấy thông tin form
-        .populate('user', 'name email'); // Lấy thông tin người dùng (chính mình)
-
-    res.json(responses);
+    const userId = req.user._id;
+    const responses = await EvaluationResponse.find({ user: userId })
+        .populate('user', 'name email position')
+        .populate({ 
+            path: 'form',
+            select: 'title description dueDate createdBy', 
+            populate: {
+                path: 'createdBy', 
+                select: 'name position' 
+            }
+        })
+        .sort({ createdAt: -1 });
+    res.status(200).json(responses);
 });
 
-// @desc    Lấy tất cả các phản hồi cho các bản đánh giá do admin hiện tại tạo
-// @route   GET /api/auth/evaluation-responses/admin/all
-// @access  Admin
 const getAdminEvaluationResponses = asyncHandler(async (req, res) => {
-    // Tìm tất cả các bản đánh giá mà admin hiện tại đã tạo
-    const createdForms = await EvaluationForm.find({ createdBy: req.user._id }).select('_id');
-    const createdFormIds = createdForms.map(form => form._id);
+    const { status, formId, userId, startDate, endDate } = req.query;
+    const query = {};
 
-    // Tìm tất cả các phản hồi cho các bản đánh giá đó
-    const responses = await EvaluationResponse.find({ form: { $in: createdFormIds } })
-        .populate('form', 'title description dueDate creatorName') // Lấy thông tin form
-        .populate('user', 'name email'); // Lấy thông tin người dùng đã trả lời
+    if (status) query.status = status;
+    if (formId) query.form = formId;
+    if (userId) query.user = userId;
 
-    res.json(responses);
+    if (startDate && endDate) {
+        const startOfDay = new Date(startDate);
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const endOfDay = new Date(endDate);
+        endOfDay.setUTCHours(23, 59, 59, 999);
+
+        query.createdAt = {
+            $gte: startOfDay,
+            $lte: endOfDay,
+        };
+    }
+
+    const responses = await EvaluationResponse.find(query)
+        .populate('user', 'name email role position')
+        .populate({ // THÊM NESTED POPULATE NÀY
+            path: 'form',
+            select: 'title description dueDate createdBy',
+            populate: {
+                path: 'createdBy',
+                select: 'name position'
+            }
+        })
+        .sort({ createdAt: -1 });
+
+    res.status(200).json(responses);
 });
 
-// @desc    Lấy chi tiết một phản hồi bản đánh giá theo ID (dành cho admin)
-// @route   GET /api/auth/evaluation-responses/:id
-// @access  Admin
 const getEvaluationResponseById = asyncHandler(async (req, res) => {
     const response = await EvaluationResponse.findById(req.params.id)
-        .populate('form', 'title description dueDate creatorName questions') // Lấy chi tiết form và câu hỏi
-        .populate('user', 'name email'); // Lấy thông tin người dùng đã trả lời
+        .populate('user', 'name email position')
+        .populate({ 
+            path: 'form',
+            select: 'title description dueDate createdBy',
+            populate: {
+                path: 'createdBy',
+                select: 'name position'
+            }
+        });
 
     if (!response) {
         res.status(404);
-        throw new Error('Không tìm thấy phản hồi bản đánh giá.');
+        throw new Error('Không tìm thấy phản hồi đánh giá.');
     }
 
-    // Kiểm tra quyền: chỉ admin tạo form hoặc admin có quyền xem tất cả mới được xem
-    // Lấy form gốc để kiểm tra người tạo
-    const form = await EvaluationForm.findById(response.form);
-    if (!form || form.createdBy.toString() !== req.user._id.toString()) {
+    // Đảm bảo người dùng chỉ xem được phản hồi của chính họ nếu không phải admin
+    if (response.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
         res.status(403);
-        throw new Error('Bạn không có quyền xem phản hồi này.');
+        throw new Error('Bạn không có quyền truy cập phản hồi này.');
     }
 
     res.json(response);
 });
 
-// @desc    Admin đánh dấu phản hồi bản đánh giá là đã nhận
-// @route   PUT /api/auth/evaluation-responses/:id/mark-received
-// @access  Admin
+
 const markResponseAsReceived = asyncHandler(async (req, res) => {
     const responseId = req.params.id;
 
     const response = await EvaluationResponse.findById(responseId)
         .populate('form', 'title') // Lấy tiêu đề form để thông báo
-        .populate('user', 'name email role'); // Lấy thông tin người dùng để thông báo
+        .populate('user', 'name email role position'); // Đã thêm 'position' vào populate
 
     if (!response) {
         res.status(404);

@@ -16,6 +16,10 @@ const leaveRequestSchema = mongoose.Schema(
             type: String,
             required: true,
         },
+        userPosition: { // <-- THÊM TRƯỜNG NÀY
+            type: String,
+            required: true, // Hoặc true nếu bạn muốn nó luôn có
+        },
         requestDate: { // Ngày mà người dùng muốn xin nghỉ
             type: String, // Lưu dưới dạng YYYY-MM-DD
             required: true,

@@ -21,21 +21,30 @@ const userSchema = mongoose.Schema(
             enum: ['user', 'admin'],
             default: 'user',
         },
-        bio: { // THÊM TRƯỜNG NÀY
+        baseSalary: {
+            type: Number,
+            default: 0, // Mặc định là 0, admin sẽ thiết lập sau
+            min: 0, // Lương cơ bản không thể là số âm
+        },
+        bio: { 
             type: String,
             default: '',
         },
-        introduction: { // THÊM TRƯỜNG NÀY
+        introduction: { 
             type: String,
             default: '',
         },
-        skills: { // THÊM TRƯỜNG NÀY
+        skills: { 
             type: [String],
             default: [],
         },
-        nickname: { // THÊM TRƯỜNG NÀY
+        nickname: { 
             type: String,
             default: '',
+        },
+        position: {
+            type: String,
+            default: 'Nhân viên', 
         },
     },
     {

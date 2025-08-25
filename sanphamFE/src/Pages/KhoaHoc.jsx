@@ -1,14 +1,14 @@
-// frontend/src/Pages/KhoaHoc.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
-import { Button, message, Spin, Card, Row, Col, Modal, Form, Input, Empty, Tag } from 'antd';
+import { Button, message, Spin, Card, Row, Col, Modal, Form, Input, Empty, Tag, Typography } from 'antd';
 import { BookOpen, Calendar, User, Phone, Mail, FileText, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 const { TextArea } = Input;
+const { Title, Text } = Typography;
 
 const API_URL = 'http://localhost:5000/api/auth';
 
@@ -24,7 +24,6 @@ const KhoaHoc = () => {
     const [userRegistrations, setUserRegistrations] = useState([]);
     const [loadingUserRegistrations, setLoadingUserRegistrations] = useState(true);
 
-    // Hàm lấy danh sách tất cả khóa học
     const fetchCourses = useCallback(async () => {
         setLoadingCourses(true);
         const token = localStorage.getItem('token');
@@ -49,7 +48,6 @@ const KhoaHoc = () => {
         }
     }, []);
 
-    // Hàm lấy lịch sử đăng ký của người dùng
     const fetchUserRegistrations = useCallback(async () => {
         if (!user) {
             setLoadingUserRegistrations(false);
@@ -85,8 +83,7 @@ const KhoaHoc = () => {
     }, [user, authLoading, fetchCourses, fetchUserRegistrations]);
 
     const showDetailModal = async (courseId) => {
-        console.log("Attempting to fetch course details for ID:", courseId); // Log for debugging
-        setLoadingCourses(true); // Tạm thời dùng loadingCourses để hiển thị loading
+        setLoadingCourses(true);
         const token = localStorage.getItem('token');
         try {
             const config = {
@@ -94,7 +91,6 @@ const KhoaHoc = () => {
                     Authorization: `Bearer ${token}`,
                 },
             };
-            // Gọi API để lấy chi tiết khóa học, đồng thời kích hoạt thông báo xem khóa học
             const res = await axios.get(`${API_URL}/training-courses/${courseId}`, config);
             setSelectedCourse(res.data);
             setIsDetailModalVisible(true);
@@ -116,7 +112,7 @@ const KhoaHoc = () => {
         form.setFieldsValue({
             fullName: user?.name,
             email: user?.email,
-            phoneNumber: '', // Để trống cho người dùng nhập
+            phoneNumber: '',
             notes: '',
         });
         setIsRegisterModalVisible(true);
@@ -147,7 +143,7 @@ const KhoaHoc = () => {
             message.success('Đăng ký khóa học thành công! Vui lòng chờ admin duyệt.');
             setIsRegisterModalVisible(false);
             form.resetFields();
-            fetchUserRegistrations(); // Cập nhật lại lịch sử đăng ký
+            fetchUserRegistrations();
         } catch (error) {
             console.error('Lỗi khi đăng ký khóa học:', error);
             message.error(error.response?.data?.message || 'Đăng ký khóa học thất bại.');
@@ -159,11 +155,11 @@ const KhoaHoc = () => {
     const getRegistrationStatusTag = (status) => {
         switch (status) {
             case 'pending':
-                return <Tag color="gold">Đang chờ duyệt</Tag>;
+                return <Tag color="gold" className="rounded-full">Đang chờ duyệt</Tag>;
             case 'approved':
-                return <Tag color="green">Đã được duyệt</Tag>;
+                return <Tag color="green" className="rounded-full">Đã được duyệt</Tag>;
             case 'rejected':
-                return <Tag color="red">Đã từ chối</Tag>;
+                return <Tag color="red" className="rounded-full">Đã từ chối</Tag>;
             default:
                 return <Tag>Không xác định</Tag>;
         }
@@ -172,7 +168,7 @@ const KhoaHoc = () => {
     if (authLoading) {
         return (
             <SBNV>
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-full min-h-screen">
                     <Spin size="large" tip="Đang tải..." />
                 </div>
             </SBNV>
@@ -191,18 +187,22 @@ const KhoaHoc = () => {
 
     return (
         <SBNV>
-            <div className="flex flex-col items-center flex-1 bg-gradient-to-br from-slate-50 to-slate-200 p-4">
+            <div className="flex flex-col items-center flex-1 min-h-screen bg-gradient-to-br from-blue-50 to-cyan-100 p-6 font-sans">
                 <div className="text-center mb-8">
-                    <h1 className="text-5xl font-black text-blue-700 drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)] mb-4">
+                    <Title level={1} className="!text-blue-800 !font-bold drop-shadow-sm flex items-center justify-center">
+                        <BookOpen size={48} className="mr-4 text-blue-600" />
                         Khóa Đào Tạo
-                    </h1>
-                    <p className="text-xl text-gray-700">
+                    </Title>
+                    <Text className="text-lg text-gray-700">
                         Chào mừng <span className="text-sky-600 font-bold">{user.name}</span>! Khám phá các khóa học hấp dẫn.
-                    </p>
+                    </Text>
                 </div>
 
-                <div className="w-full max-w-6xl mt-8 bg-white p-8 rounded-lg shadow-xl mb-12">
-                    <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Các Khóa Học Hiện Có</h2>
+                <Card
+                    className="w-full max-w-6xl shadow-2xl rounded-2xl bg-white/95 p-8 mb-12"
+                    bordered={false}
+                    title={<span className="text-xl font-semibold text-gray-800">Các Khóa Học Hiện Có</span>}
+                >
                     {loadingCourses ? (
                         <div className="flex items-center justify-center py-8">
                             <Spin size="large" tip="Đang tải danh sách khóa học..." />
@@ -213,7 +213,7 @@ const KhoaHoc = () => {
                                 <Col xs={24} sm={12} md={8} key={course._id}>
                                     <Card
                                         hoverable
-                                        className="rounded-lg shadow-md overflow-hidden h-full flex flex-col"
+                                        className="rounded-xl shadow-md overflow-hidden h-full flex flex-col transition-transform transform hover:scale-105"
                                         cover={
                                             <img
                                                 alt={course.title}
@@ -266,10 +266,13 @@ const KhoaHoc = () => {
                     ) : (
                         <Empty description="Không có khóa đào tạo nào hiện có." />
                     )}
-                </div>
+                </Card>
 
-                <div className="w-full max-w-6xl bg-white p-8 rounded-lg shadow-xl mb-12">
-                    <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Lịch Sử Đăng Ký Của Bạn</h2>
+                <Card
+                    className="w-full max-w-6xl shadow-2xl rounded-2xl bg-white/95 p-8"
+                    bordered={false}
+                    title={<span className="text-xl font-semibold text-gray-800">Lịch Sử Đăng Ký Của Bạn</span>}
+                >
                     {loadingUserRegistrations ? (
                         <div className="flex items-center justify-center py-8">
                             <Spin size="large" tip="Đang tải lịch sử đăng ký..." />
@@ -277,7 +280,7 @@ const KhoaHoc = () => {
                     ) : userRegistrations.length > 0 ? (
                         <div className="space-y-4">
                             {userRegistrations.map(reg => (
-                                <Card key={reg._id} className="rounded-lg shadow-sm">
+                                <Card key={reg._id} className="rounded-lg shadow-sm hover:shadow-md transition-shadow">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between">
                                         <div className="flex-1">
                                             <h3 className="text-lg font-semibold text-gray-800">{reg.course?.title || 'Khóa học không tồn tại'}</h3>
@@ -301,12 +304,11 @@ const KhoaHoc = () => {
                     ) : (
                         <Empty description="Bạn chưa đăng ký khóa học nào." />
                     )}
-                </div>
+                </Card>
             </div>
 
-            {/* Modal chi tiết khóa học */}
             <Modal
-                title={selectedCourse?.title}
+                title={<Title level={3} className="!mb-0">Chi tiết khóa học</Title>}
                 open={isDetailModalVisible}
                 onCancel={handleDetailModalClose}
                 footer={[
@@ -338,18 +340,23 @@ const KhoaHoc = () => {
                             />
                         )}
                         <h3 className="text-2xl font-semibold text-gray-800 mb-2">{selectedCourse.title}</h3>
-                        <div className="flex items-center text-gray-600 text-sm mb-1">
-                            <User size={16} className="mr-2" />
-                            Người tạo: {selectedCourse.createdBy?.name || 'N/A'} ({selectedCourse.createdBy?.email || 'N/A'})
+                        <div className="space-y-2 mb-4">
+                            <div className="flex items-center text-gray-600">
+                                <User size={16} className="mr-2 text-blue-500" />
+                                <span className="font-medium">Người tạo:</span> {selectedCourse.createdBy?.name || 'N/A'}
+                            </div>
+                            <div className="flex items-center text-gray-600">
+                                <User size={16} className="mr-2 text-blue-500" />
+                                <span className="font-medium">Phụ trách chính:</span> {selectedCourse.mainInCharge?.name || 'N/A'}
+                            </div>
+                            <div className="flex items-center text-gray-600">
+                                <Calendar size={16} className="mr-2 text-blue-500" />
+                                <span className="font-medium">Thời gian chi tiết:</span> {selectedCourse.detailedTime}
+                            </div>
                         </div>
-                        <div className="flex items-center text-gray-600 text-sm mb-4">
-                            <User size={16} className="mr-2" />
-                            Phụ trách chính: {selectedCourse.mainInCharge?.name || 'N/A'} ({selectedCourse.mainInCharge?.email || 'N/A'})
-                        </div>
-                        <p className="text-gray-700 mb-4 whitespace-pre-wrap">{selectedCourse.content}</p>
-                        <div className="flex items-center text-gray-700 font-medium">
-                            <Calendar size={18} className="mr-2" />
-                            Thời gian chi tiết: {selectedCourse.detailedTime}
+                        <div className="bg-gray-100 p-4 rounded-lg">
+                            <Text strong className="text-lg text-gray-800">Nội dung:</Text>
+                            <p className="text-gray-700 mt-2 whitespace-pre-wrap">{selectedCourse.content}</p>
                         </div>
                     </div>
                 ) : (
@@ -357,12 +364,11 @@ const KhoaHoc = () => {
                 )}
             </Modal>
 
-            {/* Modal đăng ký khóa học */}
             <Modal
-                title={`Đăng ký khóa học: ${selectedCourse?.title}`}
+                title={<Title level={3} className="!mb-0">Đăng ký khóa học</Title>}
                 open={isRegisterModalVisible}
                 onCancel={() => setIsRegisterModalVisible(false)}
-                footer={null} // Ẩn footer mặc định để dùng nút submit của form
+                footer={null}
             >
                 <Form
                     form={form}
@@ -375,21 +381,21 @@ const KhoaHoc = () => {
                         label="Họ và tên"
                         rules={[{ required: true, message: 'Vui lòng nhập họ và tên của bạn!' }]}
                     >
-                        <Input placeholder="Nhập họ và tên" />
+                        <Input prefix={<User size={16} />} placeholder="Nhập họ và tên" />
                     </Form.Item>
                     <Form.Item
                         name="email"
                         label="Email"
                         rules={[{ required: true, message: 'Vui lòng nhập email của bạn!' }, { type: 'email', message: 'Email không hợp lệ!' }]}
                     >
-                        <Input placeholder="Nhập email" />
+                        <Input prefix={<Mail size={16} />} placeholder="Nhập email" />
                     </Form.Item>
                     <Form.Item
                         name="phoneNumber"
                         label="Số điện thoại"
                         rules={[{ required: true, message: 'Vui lòng nhập số điện thoại của bạn!' }, { pattern: /^[0-9]+$/, message: 'Số điện thoại chỉ được chứa số!' }]}
                     >
-                        <Input placeholder="Nhập số điện thoại" />
+                        <Input prefix={<Phone size={16} />} placeholder="Nhập số điện thoại" />
                     </Form.Item>
                     <Form.Item
                         name="notes"
@@ -398,7 +404,7 @@ const KhoaHoc = () => {
                         <TextArea rows={3} placeholder="Ghi chú thêm về việc đăng ký của bạn..." />
                     </Form.Item>
                     <Form.Item>
-                        <Button type="primary" htmlType="submit" loading={loadingRegister} className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg">
+                        <Button type="primary" htmlType="submit" loading={loadingRegister} icon={<CheckCircle size={16} />} className="w-full bg-blue-600 hover:bg-blue-700 rounded-lg">
                             Gửi đăng ký
                         </Button>
                     </Form.Item>

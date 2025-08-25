@@ -1,12 +1,10 @@
-// frontend/src/Pages/QuanLyXinNghi.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
-import { Button, message, Spin, Table, Tag, Modal, Input, DatePicker } from 'antd'; // Import DatePicker
+import { Button, message, Spin, Table, Tag, Modal, Input, DatePicker } from 'antd'; 
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import moment from 'moment';
 
 const { TextArea } = Input;
 
@@ -14,12 +12,11 @@ const QuanLyXinNghi = () => {
     const { user, loading: authLoading } = useAuth();
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [loadingRequests, setLoadingRequests] = useState(true);
-    // Thay đổi selectedDate thành null ban đầu để hiển thị tất cả
     const [selectedDate, setSelectedDate] = useState(null);
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
     const [currentRequestToReview, setCurrentRequestToReview] = useState(null);
     const [adminNotes, setAdminNotes] = useState('');
-    const [reviewStatus, setReviewStatus] = useState(null); // 'approved' or 'rejected'
+    const [reviewStatus, setReviewStatus] = useState(null); 
 
     const API_URL = 'http://localhost:5000/api/auth';
 
@@ -79,7 +76,6 @@ const QuanLyXinNghi = () => {
     // Xử lý khi nhấn nút "Xem tất cả"
     const handleViewAllClick = () => {
         setSelectedDate(null); // Đặt lại ngày tìm kiếm về null
-        // useEffect sẽ tự động gọi fetchAllLeaveRequests() mà không có filter ngày
     };
 
     const showReviewModal = (record, status) => {
@@ -151,6 +147,13 @@ const QuanLyXinNghi = () => {
             dataIndex: 'name',
             key: 'name',
             width: 150,
+        },
+        {
+            title: 'Chức vụ',
+            dataIndex: ['user', 'position'],
+            key: 'position',
+            width: 120,
+            render: (position) => position || 'N/A',
         },
         {
             title: 'Email',

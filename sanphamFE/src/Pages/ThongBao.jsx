@@ -1,12 +1,12 @@
-// frontend/src/Pages/ThongBao.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
-import { List, message, Spin, Button, Tag, Empty, Select, Popconfirm } from 'antd'; // Thêm Select, Popconfirm
+import { List, message, Spin, Button, Tag, Empty, Select, Popconfirm } from 'antd'; 
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { CheckCircle, XCircle, Eye, UserPlus, BookOpen, GraduationCap, MessageSquareWarning, Send, Bell, Filter, Trash2 } from 'lucide-react'; // Import thêm icon
+import { CheckCircle, XCircle, Eye, UserPlus, BookOpen, GraduationCap, MessageSquareWarning, Send, Bell, Filter, Trash2, User, Edit, ArrowLeft } from 'lucide-react'; // Import thêm icon ArrowLeft
+import { Link } from 'react-router-dom'; 
 
 const { Option } = Select;
 
@@ -17,8 +17,8 @@ const ThongBao = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [markingRead, setMarkingRead] = useState(false);
-    const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'read', 'unread'
-    const [filterType, setFilterType] = useState('all'); // 'all' hoặc loại thông báo cụ thể
+    const [filterStatus, setFilterStatus] = useState('all'); 
+    const [filterType, setFilterType] = useState('all'); 
 
     const fetchNotifications = useCallback(async () => {
         if (!user) {
@@ -89,7 +89,6 @@ const ThongBao = () => {
                     Authorization: `Bearer ${token}`,
                 },
             };
-            // Gọi API để xóa các thông báo đã đọc (cần thêm route và controller ở backend)
             await axios.delete(`${API_URL}/notifications/read`, config);
             message.success('Đã xóa tất cả thông báo đã đọc.');
             fetchNotifications(); // Cập nhật lại danh sách thông báo
@@ -108,25 +107,29 @@ const ThongBao = () => {
             case 'complaint_resolved':
                 return <CheckCircle className="text-green-500" />;
             case 'check_in':
-                return <Eye className="text-blue-500" />; // Admin xem user chấm công
+                return <Eye className="text-blue-500" />; 
             case 'user_checked_in':
-                return <CheckCircle className="text-green-500" />; // User chấm công thành công
+                return <CheckCircle className="text-green-500" />; 
             case 'marked_leave':
-                return <XCircle className="text-red-500" />; // Admin đánh dấu nghỉ phép
+                return <XCircle className="text-red-500" />; 
             case 'new_leave_request':
-                return <UserPlus className="text-orange-500" />; // Admin có đơn nghỉ phép mới
+                return <UserPlus className="text-orange-500" />; 
             case 'new_complaint':
-                return <MessageSquareWarning className="text-orange-500" />; // Admin có khiếu nại mới
+                return <MessageSquareWarning className="text-orange-500" />; 
             case 'admin_message':
-                return <Send className="text-purple-500" />; // Thông báo do admin gửi
+                return <Send className="text-purple-500" />;
             case 'course_viewed':
-                return <Eye className="text-indigo-500" />; // Khóa học được xem
+                return <Eye className="text-indigo-500" />;
             case 'course_registered':
-                return <UserPlus className="text-teal-500" />; // Có người đăng ký khóa học
+                return <UserPlus className="text-teal-500" />; 
             case 'course_registration_approved':
-                return <CheckCircle className="text-green-500" />; // Đăng ký khóa học được duyệt
+                return <CheckCircle className="text-green-500" />; 
             case 'course_registration_rejected':
-                return <XCircle className="text-red-500" />; // Đăng ký khóa học bị từ chối
+                return <XCircle className="text-red-500" />; 
+            case 'user_profile_updated_by_admin': 
+                return <User className="text-blue-500" />; 
+            case 'own_profile_updated': 
+                return <Edit className="text-purple-500" />; 
             default:
                 return <Bell className="text-gray-500" />;
         }
@@ -136,8 +139,8 @@ const ThongBao = () => {
     const filteredNotifications = useMemo(() => {
         return notifications.filter(notification => {
             const statusMatch = filterStatus === 'all' ||
-                                (filterStatus === 'read' && notification.isRead) ||
-                                (filterStatus === 'unread' && !notification.isRead);
+                (filterStatus === 'read' && notification.isRead) ||
+                (filterStatus === 'unread' && !notification.isRead);
             const typeMatch = filterType === 'all' || notification.type === filterType;
             return statusMatch && typeMatch;
         });
@@ -172,18 +175,19 @@ const ThongBao = () => {
 
     return (
         <SBNV>
-            <div className="flex flex-col items-center flex-1 bg-gradient-to-br from-slate-50 to-slate-200 p-4">
-                <div className="text-center mb-8">
-                    <h1 className="text-5xl font-black text-blue-700 drop-shadow-[0_5px_5px_rgba(0,0,0,0.2)] mb-4">
-                        Thông Báo Của Bạn
-                    </h1>
-                    <p className="text-xl text-gray-700">
-                        Chào mừng <span className="text-sky-600 font-bold">{user.name}</span>! Đây là các thông báo mới nhất dành cho bạn.
-                    </p>
-                </div>
-
-                <div className="w-full max-w-4xl mt-8 bg-white p-8 rounded-lg shadow-xl mb-12">
-                    <h2 className="text-3xl font-semibold text-gray-800 mb-6 text-center">Tất Cả Thông Báo</h2>
+            <div className="flex flex-col items-center flex-1 bg-gradient-to-br from-indigo-100 to-sky-100 p-4 min-h-screen">
+                <div className="animate-fadeInScale bg-white p-8 rounded-2xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 hover:shadow-2xl relative">
+                    <Link to="/" className="absolute top-4 left-4 text-gray-600 hover:text-blue-600 transition-colors duration-200">
+                        <ArrowLeft size={24} />
+                    </Link>
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-extrabold text-blue-700 drop-shadow-sm mt-4">
+                            Thông Báo
+                        </h1>
+                        <p className="text-center text-gray-500">
+                            Chào mừng <span className="text-sky-600 font-bold">{user.name}</span>! Đây là các thông báo mới nhất dành cho bạn.
+                        </p>
+                    </div>
 
                     {/* Bộ lọc và nút hành động */}
                     <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
@@ -209,7 +213,7 @@ const ThongBao = () => {
                                 <Option value="all">Tất cả loại</Option>
                                 {uniqueNotificationTypes.map(type => (
                                     <Option key={type} value={type}>
-                                        {type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} {/* Format type string */}
+                                        {type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} 
                                     </Option>
                                 ))}
                             </Select>
@@ -255,7 +259,7 @@ const ThongBao = () => {
                                             </Button>
                                         ),
                                     ].filter(Boolean)}
-                                    className={`p-4 rounded-lg shadow-sm mb-3 ${item.isRead ? 'bg-gray-100' : 'bg-blue-50'}`}
+                                    className={`p-4 rounded-lg shadow-sm mb-3 transition-all duration-300 ${item.isRead ? 'bg-gray-100 hover:bg-gray-200' : 'bg-blue-50 hover:bg-blue-100'}`}
                                 >
                                     <List.Item.Meta
                                         avatar={getNotificationIcon(item.type)}
@@ -264,13 +268,13 @@ const ThongBao = () => {
                                                 <span className="font-semibold text-gray-800 mr-2">{item.message}</span>
                                                 {!item.isRead && <Tag color="blue">Mới</Tag>}
                                                 <Tag color="geekblue" className="ml-2">
-                                                    {item.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+                                                    {item.type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} {/* Format type string */}
                                                 </Tag>
                                             </div>
                                         }
                                         description={
                                             <div className="text-gray-600 text-sm">
-                                                <p>Gửi bởi: {item.senderName}</p>
+                                                <p>Gửi bởi: {item.senderName} {item.senderRole && `(${item.senderRole})`}</p>
                                                 <p>Thời gian: {format(new Date(item.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })}</p>
                                                 {item.relatedDate && (
                                                     <p>Liên quan đến ngày: {format(new Date(item.relatedDate), 'dd/MM/yyyy', { locale: vi })}</p>

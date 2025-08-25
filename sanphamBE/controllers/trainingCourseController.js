@@ -1,13 +1,10 @@
-// backend/controllers/trainingCourseController.js
 import asyncHandler from 'express-async-handler';
 import TrainingCourse from '../models/TrainingCourse.js';
-import User from '../models/User.js'; // Import User model để populate thông tin người tạo/phụ trách
-import { createNotification } from './notificationController.js'; // Import hàm tạo thông báo
-import { addHours } from 'date-fns'; // Để xử lý giới hạn 24 giờ
+import User from '../models/User.js'; 
+import { createNotification } from './notificationController.js';
+import { addHours } from 'date-fns'; 
 
-// @desc    Tạo khóa đào tạo mới
-// @route   POST /api/auth/training-courses
-// @access  Admin
+
 const createCourse = asyncHandler(async (req, res) => {
     const { title, overview, content, imageUrl, detailedTime, mainInChargeId } = req.body;
 
@@ -33,25 +30,19 @@ const createCourse = asyncHandler(async (req, res) => {
     res.status(201).json(createdCourse);
 });
 
-// @desc    Lấy tất cả khóa đào tạo
-// @route   GET /api/auth/training-courses
-// @access  Public (User & Admin)
 const getAllCourses = asyncHandler(async (req, res) => {
     // Populate thông tin người tạo và người phụ trách chính
     const courses = await TrainingCourse.find({})
-        .populate('createdBy', 'name email') // Chỉ lấy name và email của người tạo
-        .populate('mainInCharge', 'name email'); // Chỉ lấy name và email của người phụ trách
+        .populate('createdBy', 'name email position') // Chỉ lấy name và email của người tạo
+        .populate('mainInCharge', 'name email position'); // Chỉ lấy name và email của người phụ trách
 
     res.json(courses);
 });
 
-// @desc    Lấy chi tiết một khóa đào tạo theo ID
-// @route   GET /api/auth/training-courses/:id
-// @access  Public (User & Admin)
 const getCourseById = asyncHandler(async (req, res) => {
     const course = await TrainingCourse.findById(req.params.id)
-        .populate('createdBy', 'name email')
-        .populate('mainInCharge', 'name email');
+        .populate('createdBy', 'name email position')
+        .populate('mainInCharge', 'name email position');
 
     if (course) {
         // Gửi thông báo cho admin nếu có người dùng xem khóa học của họ
@@ -95,9 +86,6 @@ const getCourseById = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Cập nhật khóa đào tạo
-// @route   PUT /api/auth/training-courses/:id
-// @access  Admin
 const updateCourse = asyncHandler(async (req, res) => {
     const { title, overview, content, imageUrl, detailedTime, mainInChargeId } = req.body;
 
@@ -142,9 +130,6 @@ const updateCourse = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Xóa khóa đào tạo
-// @route   DELETE /api/auth/training-courses/:id
-// @access  Admin
 const deleteCourse = asyncHandler(async (req, res) => {
     const course = await TrainingCourse.findById(req.params.id);
 
@@ -162,13 +147,10 @@ const deleteCourse = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Lấy các khóa đào tạo do admin hiện tại tạo
-// @route   GET /api/auth/training-courses/my-created
-// @access  Admin
 const getAdminCreatedCourses = asyncHandler(async (req, res) => {
     const courses = await TrainingCourse.find({ createdBy: req.user._id })
-        .populate('createdBy', 'name email')
-        .populate('mainInCharge', 'name email');
+        .populate('createdBy', 'name email position')
+        .populate('mainInCharge', 'name email position');
     res.json(courses);
 });
 

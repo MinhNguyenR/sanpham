@@ -1,4 +1,3 @@
-// frontend/src/Pages/QuanLyDanhGia.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
@@ -7,7 +6,7 @@ import { Eye, History, FileText, Calendar, Clock, User as UserIcon, Filter, Chec
 import axios from 'axios';
 import { format, isPast } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import moment from 'moment'; 
+import moment from 'moment';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -17,27 +16,27 @@ const API_URL = 'http://localhost:5000/api/auth';
 
 const QuanLyDanhGia = () => {
     const { user, loading: authLoading } = useAuth();
-    const [form] = Form.useForm(); // Form cho việc tạo/chỉnh sửa bản đánh giá
+    const [form] = Form.useForm(); 
     const [loadingSubmit, setLoadingSubmit] = useState(false);
-    const [formsCreatedByAdmin, setFormsCreatedByAdmin] = useState([]); // Các bản đánh giá do admin hiện tại tạo
+    const [formsCreatedByAdmin, setFormsCreatedByAdmin] = useState([]); 
     const [loadingForms, setLoadingForms] = useState(true);
     const [isCreateFormModalVisible, setIsCreateFormModalVisible] = useState(false);
     const [formToDelete, setFormToDelete] = useState(null);
     const [isDeleteFormModalVisible, setIsDeleteFormModalVisible] = useState(false);
 
-    const [allEvaluationResponses, setAllEvaluationResponses] = useState([]); // Tất cả phản hồi cho các form của admin
-    const [filteredResponses, setFilteredResponses] = useState([]); // Phản hồi đã lọc
+    const [allEvaluationResponses, setAllEvaluationResponses] = useState([]); 
+    const [filteredResponses, setFilteredResponses] = useState([]); 
     const [loadingResponses, setLoadingResponses] = useState(true);
     const [isResponseDetailModalVisible, setIsResponseDetailModalVisible] = useState(false);
-    const [selectedResponseDetail, setSelectedResponseDetail] = useState(null); // Chi tiết phản hồi đang xem
+    const [selectedResponseDetail, setSelectedResponseDetail] = useState(null); 
     const [loadingResponseUpdate, setLoadingResponseUpdate] = useState(false);
 
-    const [activeTab, setActiveTab] = useState('manageForms'); // Mặc định tab quản lý bản đánh giá
+    const [activeTab, setActiveTab] = useState('manageForms'); 
 
     // State cho filter
     const [filterUserName, setFilterUserName] = useState('');
     const [filterUserEmail, setFilterUserEmail] = useState('');
-    const [filterDate, setFilterDate] = useState(null); // moment object for DatePicker
+    const [filterDate, setFilterDate] = useState(null); 
 
     // Hàm lấy các bản đánh giá do admin hiện tại tạo
     const fetchAdminCreatedForms = useCallback(async () => {
@@ -73,7 +72,7 @@ const QuanLyDanhGia = () => {
             };
             const res = await axios.get(`${API_URL}/evaluation-responses/admin/all`, config);
             setAllEvaluationResponses(res.data);
-            setFilteredResponses(res.data); // Ban đầu, filteredResponses bằng tất cả responses
+            setFilteredResponses(res.data);
         } catch (error) {
             console.error('Lỗi khi tải tất cả phản hồi đánh giá:', error);
             message.error(error.response?.data?.message || 'Không thể tải tất cả phản hồi đánh giá.');
@@ -89,7 +88,6 @@ const QuanLyDanhGia = () => {
         }
     }, [user, authLoading, fetchAdminCreatedForms, fetchAllEvaluationResponses]);
 
-    // Apply filters whenever filter states or allEvaluationResponses change
     useEffect(() => {
         const applyFilters = () => {
             let tempResponses = [...allEvaluationResponses];
@@ -149,7 +147,6 @@ const QuanLyDanhGia = () => {
         }
 
         values.questions.forEach((q, index) => {
-            // Check for undefined or null question object
             if (!q) {
                 message.error(`Câu hỏi ${index + 1}: Dữ liệu câu hỏi không hợp lệ.`);
                 hasValidationError = true;
@@ -159,7 +156,7 @@ const QuanLyDanhGia = () => {
             if (!q.questionText || q.questionText.trim() === '' || !q.questionType || q.questionType.trim() === '') {
                 message.error(`Câu hỏi ${index + 1}: Vui lòng nhập nội dung và chọn loại câu hỏi.`);
                 hasValidationError = true;
-                return; // Skip this question, but continue checking others
+                return; 
             }
 
             const questionData = {
@@ -169,7 +166,6 @@ const QuanLyDanhGia = () => {
             };
 
             if (questionData.questionType === 'radio' || questionData.questionType === 'checkbox') {
-                // Options are now an array of objects { optionText: 'value' }
                 questionData.options = q.options ? q.options.map(opt => opt.optionText.trim()).filter(opt => opt !== '') : [];
                 if (questionData.options.length === 0) {
                     message.error(`Câu hỏi ${index + 1}: Vui lòng thêm ít nhất một lựa chọn cho câu hỏi loại "${questionData.questionType}".`);
@@ -186,7 +182,7 @@ const QuanLyDanhGia = () => {
 
         if (hasValidationError) {
             setLoadingSubmit(false);
-            return; // Stop submission if any question has validation errors
+            return; 
         }
 
         const payload = {
@@ -196,7 +192,7 @@ const QuanLyDanhGia = () => {
             questions: questions,
         };
 
-        console.log('Sending payload:', JSON.stringify(payload, null, 2)); // Thêm dòng này để in payload ra console
+        console.log('Sending payload:', JSON.stringify(payload, null, 2)); 
 
         try {
             const config = {
@@ -208,10 +204,9 @@ const QuanLyDanhGia = () => {
             await axios.post(`${API_URL}/evaluation-forms`, payload, config);
             message.success('Tạo bản đánh giá thành công!');
             handleCreateFormCancel();
-            fetchAdminCreatedForms(); // Cập nhật lại danh sách bản đánh giá
-            fetchAllEvaluationResponses(); // Cập nhật lại danh sách phản hồi
+            fetchAdminCreatedForms(); 
+            fetchAllEvaluationResponses(); 
         } catch (error) {
-            console.error('Lỗi khi tạo bản đánh giá:', error.response?.data || error.message); // Debug: Log lỗi chi tiết từ backend
             message.error(error.response?.data?.message || 'Tạo bản đánh giá thất bại.');
         } finally {
             setLoadingSubmit(false);
@@ -238,8 +233,8 @@ const QuanLyDanhGia = () => {
             message.success('Bản đánh giá đã được xóa thành công.');
             setIsDeleteFormModalVisible(false);
             setFormToDelete(null);
-            fetchAdminCreatedForms(); // Cập nhật lại danh sách bản đánh giá
-            fetchAllEvaluationResponses(); // Cập nhật lại danh sách phản hồi
+            fetchAdminCreatedForms(); 
+            fetchAllEvaluationResponses(); 
         } catch (error) {
             console.error('Lỗi khi xóa bản đánh giá:', error);
             message.error(error.response?.data?.message || 'Xóa bản đánh giá thất bại.');
@@ -249,7 +244,7 @@ const QuanLyDanhGia = () => {
     };
 
     const showResponseDetailModal = async (response) => {
-        setLoadingResponses(true); // Tạm thời hiển thị loading khi fetch chi tiết phản hồi
+        setLoadingResponses(true); 
         const token = localStorage.getItem('token');
         try {
             const config = {
@@ -314,35 +309,40 @@ const QuanLyDanhGia = () => {
             title: 'Tiêu đề',
             dataIndex: 'title',
             key: 'title',
-            width: 250,
+            width: 180, 
             ellipsis: true,
         },
         {
             title: 'Mô tả',
             dataIndex: 'description',
             key: 'description',
-            width: 300,
+            width: 250, 
             ellipsis: true,
         },
         {
             title: 'Người tạo',
             dataIndex: 'creatorName',
             key: 'creatorName',
-            width: 150,
+            width: 150, 
+            render: (text, record) => (
+                <span>
+                    {record.createdBy?.name || 'N/A'} {record.createdBy?.position ? `(${record.createdBy.position})` : ''}
+                </span>
+            ),
         },
         {
             title: 'Thời hạn',
             dataIndex: 'dueDate',
             key: 'dueDate',
             render: (text) => text ? format(new Date(text), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A',
-            width: 180,
+            width: 150, 
         },
         {
             title: 'Ngày tạo',
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text) => text ? format(new Date(text), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A',
-            width: 180,
+            width: 150, 
         },
         {
             title: 'Trạng thái',
@@ -358,7 +358,7 @@ const QuanLyDanhGia = () => {
         {
             title: 'Hành động',
             key: 'action',
-            width: 120,
+            width: 100, 
             fixed: 'right',
             render: (text, record) => (
                 <Popconfirm
@@ -368,7 +368,7 @@ const QuanLyDanhGia = () => {
                     okText="Xóa"
                     cancelText="Hủy"
                     okButtonProps={{ danger: true }}
-                    disabled={record.responsesCount > 0} // Vô hiệu hóa nếu đã có phản hồi
+                    disabled={record.responsesCount > 0}
                 >
                     <Button
                         type="primary"
@@ -388,7 +388,7 @@ const QuanLyDanhGia = () => {
             title: 'Tiêu đề bản đánh giá',
             dataIndex: ['form', 'title'],
             key: 'formTitle',
-            width: 250,
+            width: 200, 
             ellipsis: true,
             render: (text, record) => record.form?.title || 'N/A',
         },
@@ -396,21 +396,26 @@ const QuanLyDanhGia = () => {
             title: 'Người trả lời',
             dataIndex: 'userName',
             key: 'userName',
-            width: 150,
-            render: (text, record) => `${record.userName || 'N/A'} (${record.userEmail || 'N/A'})`,
+            width: 150, 
+            render: (text, record) => (
+                <span>
+                    {record.user?.name || 'N/A'} {record.user?.position ? `(${record.user.position})` : ''}
+                    {record.user?.email && <><br /><small className="text-gray-500">{record.user.email}</small></>}
+                </span>
+            ),
         },
         {
             title: 'Ngày gửi',
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text) => text ? format(new Date(text), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A',
-            width: 180,
+            width: 150, 
         },
         {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
-            width: 150,
+            width: 130, 
             render: (status) => {
                 let color = 'gold';
                 let text = 'Đang chờ Admin xem';
@@ -424,8 +429,8 @@ const QuanLyDanhGia = () => {
         {
             title: 'Hành động',
             key: 'action',
-            width: 150,
-            fixed: 'right',
+            width: 100, 
+            fixed: 'right', 
             render: (text, record) => (
                 <div className="flex space-x-2">
                     <Button
@@ -623,7 +628,6 @@ const QuanLyDanhGia = () => {
                         {(fields, { add, remove }) => (
                             <>
                                 {fields.map((field, index) => {
-                                    // Lấy giá trị questionType hiện tại của câu hỏi này
                                     const questionType = form.getFieldValue(['questions', field.name, 'questionType']);
 
                                     return (
@@ -673,7 +677,6 @@ const QuanLyDanhGia = () => {
                                                 </Select>
                                             </Form.Item>
 
-                                            {/* Render input field based on questionType */}
                                             <Form.Item
                                                 name={[field.name, 'questionText']}
                                                 rules={[{ required: true, message: 'Vui lòng nhập nội dung câu hỏi!' }]}
@@ -682,7 +685,7 @@ const QuanLyDanhGia = () => {
                                                 <Input placeholder="Nội dung câu hỏi (ví dụ: Tên của bạn là gì?)" />
                                             </Form.Item>
 
-                                            { (questionType === 'radio' || questionType === 'checkbox') && (
+                                            {(questionType === 'radio' || questionType === 'checkbox') && (
                                                 <Form.List name={[field.name, 'options']}>
                                                     {(optionFields, { add: addOption, remove: removeOption }) => (
                                                         <>
@@ -692,7 +695,7 @@ const QuanLyDanhGia = () => {
                                                                         name={[optionField.name, 'optionText']}
                                                                         fieldKey={[optionField.fieldKey, 'optionText']}
                                                                         rules={[{ required: true, message: 'Vui lòng nhập lựa chọn!' }]}
-                                                                        className="flex-grow mb-0" // Giảm margin-bottom mặc định
+                                                                        className="flex-grow mb-0" 
                                                                     >
                                                                         <Input placeholder={`Lựa chọn ${optionIndex + 1}`} />
                                                                     </Form.Item>
@@ -721,7 +724,7 @@ const QuanLyDanhGia = () => {
                                                     )}
                                                 </Form.List>
                                             )}
-                                            { (questionType === 'number' || questionType === 'rating') && (
+                                            {(questionType === 'number' || questionType === 'rating') && (
                                                 <div className="flex space-x-2">
                                                     <Form.Item name={[field.name, 'min']} label="Min" className="flex-1" fieldKey={[field.fieldKey, 'min']}>
                                                         <Input type="number" placeholder="Min" />
@@ -804,7 +807,14 @@ const QuanLyDanhGia = () => {
                     <div className="p-4">
                         <h3 className="text-xl font-semibold text-gray-800 mb-4">Thông tin bản đánh giá</h3>
                         <p className="flex items-center mb-2"><FileText size={18} className="mr-2 text-blue-500" /> <strong>Tiêu đề:</strong>&nbsp;{selectedResponseDetail.form?.title || 'N/A'}</p>
-                        <p className="flex items-center mb-2"><UserIcon size={18} className="mr-2 text-blue-500" /> <strong>Người tạo form:</strong>&nbsp;{selectedResponseDetail.form?.createdBy?.name || 'N/A'}</p>
+                        <p className="flex items-center mb-2">
+                            <span className="flex items-center">
+                                <UserIcon size={16} className="inline-block mr-1 text-blue-500" /> 
+                                <strong>Người tạo:</strong>&nbsp; 
+                                {selectedResponseDetail.form.createdBy?.name || 'N/A'}
+                                {selectedResponseDetail.form.createdBy?.position ? ` (${selectedResponseDetail.form.createdBy.position})` : ''}
+                            </span>
+                        </p>
                         <p className="flex items-center mb-2"><Calendar size={18} className="mr-2 text-blue-500" /> <strong>Thời hạn form:</strong>&nbsp;{selectedResponseDetail.form?.dueDate ? format(new Date(selectedResponseDetail.form.dueDate), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A'}</p>
                         <p className="flex items-center mb-2"><Clock size={18} className="mr-2 text-blue-500" /> <strong>Ngày gửi phản hồi:</strong>&nbsp;{selectedResponseDetail.createdAt ? format(new Date(selectedResponseDetail.createdAt), 'dd/MM/yyyy HH:mm', { locale: vi }) : 'N/A'}</p>
                         <p className="flex items-center mb-4"><strong>Trạng thái phản hồi:</strong>&nbsp;

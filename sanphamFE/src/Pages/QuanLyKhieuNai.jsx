@@ -1,4 +1,3 @@
-// frontend/src/Pages/QuanLyKhieuNai.jsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../Context/AuthContext';
 import SBNV from '../ChucNang/sbnv';
@@ -6,7 +5,7 @@ import { Button, message, Spin, Table, Tag, Modal, Input } from 'antd';
 import axios from 'axios';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import moment from 'moment'; // Import moment for date formatting
+import moment from 'moment'; 
 
 const { TextArea } = Input;
 
@@ -19,7 +18,7 @@ const QuanLyKhieuNai = () => {
     const [currentComplaintToResolve, setCurrentComplaintToResolve] = useState(null);
     const [adminNotes, setAdminNotes] = useState('');
 
-    const API_URL = 'http://localhost:5000/api/auth'; // Đảm bảo đúng URL API
+    const API_URL = 'http://localhost:5000/api/auth'; 
 
     // Hàm lấy tất cả khiếu nại cho Admin (có thể lọc theo ngày)
     const fetchAllComplaints = async (date) => {
@@ -125,13 +124,20 @@ const QuanLyKhieuNai = () => {
             title: 'Người gửi',
             dataIndex: 'name',
             key: 'name',
-            width: 150, // Thêm chiều rộng cố định
+            width: 150, 
         },
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
             width: 200,
+        },
+        {
+            title: 'Chức vụ',
+            dataIndex: 'position', 
+            key: 'position',
+            width: 150,
+            render: (text) => text || 'N/A', // Hiển thị 'N/A' nếu không có dữ liệu
         },
         {
             title: 'Chủ đề',
@@ -155,7 +161,7 @@ const QuanLyKhieuNai = () => {
                     {status === 'pending' ? 'Đang chờ giải quyết' : 'Đã giải quyết'}
                 </Tag>
             ),
-            width: 150, // Điều chỉnh chiều rộng cho cột trạng thái
+            width: 150, 
         },
         {
             title: 'Ghi chú của Admin',

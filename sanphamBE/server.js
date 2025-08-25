@@ -111,6 +111,7 @@ app.use(async (req, res, next) => {
         if (path === '/attendance/check-in' && user) {
             // Thông báo cho người dùng đã chấm công
             await createNotification({
+                io, // Truyền đối tượng io
                 sender: null, // Hệ thống gửi
                 senderName: 'Hệ thống',
                 receiver: user._id,
@@ -119,14 +120,15 @@ app.use(async (req, res, next) => {
                 message: `Bạn đã chấm công thành công vào lúc ${new Date().toLocaleTimeString('vi-VN')}.`,
                 relatedDate: new Date().toISOString().split('T')[0],
             });
-            io.to(user._id.toString()).emit('newNotification', { type: 'user_checked_in' });
-            console.log(`[Notification Middleware] Emitted 'user_checked_in' to user ${user._id}`);
+            // io.to(user._id.toString()).emit('newNotification', { type: 'user_checked_in' }); // ĐÃ BỎ DÒNG NÀY
+            console.log(`[Notification Middleware] Processed 'user_checked_in' for user ${user._id}`);
 
             // Thông báo cho admin về việc user vừa chấm công
             const admins = await User.find({ role: 'admin' });
             console.log(`[Notification Middleware] Found ${admins.length} admins for 'check_in' notification.`);
             for (const admin of admins) {
                 await createNotification({
+                    io, // Truyền đối tượng io
                     sender: user._id,
                     senderName: user.name,
                     receiver: admin._id,
@@ -135,8 +137,8 @@ app.use(async (req, res, next) => {
                     message: `${user.name} đã chấm công vào lúc ${new Date().toLocaleTimeString('vi-VN')}.`,
                     relatedDate: new Date().toISOString().split('T')[0],
                 });
-                io.to(admin._id.toString()).emit('newNotification', { type: 'check_in' });
-                console.log(`[Notification Middleware] Emitted 'check_in' to admin ${admin._id}`);
+                // io.to(admin._id.toString()).emit('newNotification', { type: 'check_in' }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed 'check_in' for admin ${admin._id}`);
             }
         }
         // Xử lý thông báo cho yêu cầu nghỉ phép (Admin duyệt/từ chối)
@@ -150,6 +152,7 @@ app.use(async (req, res, next) => {
                     : `Yêu cầu nghỉ phép ngày ${format(new Date(updatedLeaveRequest.requestDate), 'dd/MM/yyyy')} của bạn đã bị từ chối. Lý do: ${updatedLeaveRequest.adminNotes || 'Không có'}`;
 
                 await createNotification({
+                    io, // Truyền đối tượng io
                     sender: user._id,
                     senderName: user.name,
                     receiver: receiverUser._id,
@@ -159,8 +162,8 @@ app.use(async (req, res, next) => {
                     entityId: updatedLeaveRequest._id,
                     relatedDate: updatedLeaveRequest.requestDate,
                 });
-                io.to(receiverUser._id.toString()).emit('newNotification', { type: type, entityId: updatedLeaveRequest._id });
-                console.log(`[Notification Middleware] Emitted '${type}' to user ${receiverUser._id} for leave request.`);
+                // io.to(receiverUser._id.toString()).emit('newNotification', { type: type, entityId: updatedLeaveRequest._id }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed '${type}' for user ${receiverUser._id} for leave request.`);
             }
         }
         // Xử lý thông báo cho khiếu nại (Admin giải quyết)
@@ -170,6 +173,7 @@ app.use(async (req, res, next) => {
             if (receiverUser) {
                 const messageContent = `Khiếu nại "${updatedComplaint.subject}" của bạn đã được giải quyết. Ghi chú của Admin: ${updatedComplaint.adminNotes || 'Không có'}`;
                 await createNotification({
+                    io, // Truyền đối tượng io
                     sender: user._id,
                     senderName: user.name,
                     receiver: receiverUser._id,
@@ -179,8 +183,8 @@ app.use(async (req, res, next) => {
                     entityId: updatedComplaint._id,
                     relatedDate: format(new Date(updatedComplaint.createdAt), 'yyyy-MM-dd'),
                 });
-                io.to(receiverUser._id.toString()).emit('newNotification', { type: 'complaint_resolved', entityId: updatedComplaint._id });
-                console.log(`[Notification Middleware] Emitted 'complaint_resolved' to user ${receiverUser._id} for complaint.`);
+                // io.to(receiverUser._id.toString()).emit('newNotification', { type: 'complaint_resolved', entityId: updatedComplaint._id }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed 'complaint_resolved' for user ${receiverUser._id} for complaint.`);
             }
         }
         // Thông báo cho admin khi có đơn nghỉ phép mới
@@ -189,6 +193,7 @@ app.use(async (req, res, next) => {
             console.log(`[Notification Middleware] Found ${admins.length} admins for 'new_leave_request' notification.`);
             for (const admin of admins) {
                 await createNotification({
+                    io, // Truyền đối tượng io
                     sender: user._id,
                     senderName: user.name,
                     receiver: admin._id,
@@ -198,8 +203,8 @@ app.use(async (req, res, next) => {
                     entityId: responseData?.leaveRequest?._id,
                     relatedDate: req.body.requestDate,
                 });
-                io.to(admin._id.toString()).emit('newNotification', { type: 'new_leave_request' });
-                console.log(`[Notification Middleware] Emitted 'new_leave_request' to admin ${admin._id}`);
+                // io.to(admin._id.toString()).emit('newNotification', { type: 'new_leave_request' }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed 'new_leave_request' for admin ${admin._id}`);
             }
         }
         // Thông báo cho admin khi có khiếu nại mới
@@ -208,6 +213,7 @@ app.use(async (req, res, next) => {
             console.log(`[Notification Middleware] Found ${admins.length} admins for 'new_complaint' notification.`);
             for (const admin of admins) {
                 await createNotification({
+                    io, // Truyền đối tượng io
                     sender: user._id,
                     senderName: user.name,
                     receiver: admin._id,
@@ -217,8 +223,8 @@ app.use(async (req, res, next) => {
                     entityId: responseData?.complaint?._id,
                     relatedDate: format(new Date(), 'yyyy-MM-dd'),
                 });
-                io.to(admin._id.toString()).emit('newNotification', { type: 'new_complaint' });
-                console.log(`[Notification Middleware] Emitted 'new_complaint' to admin ${admin._id}`);
+                // io.to(admin._id.toString()).emit('newNotification', { type: 'new_complaint' }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed 'new_complaint' for admin ${admin._id}`);
             }
         }
         // Thông báo cho user khi admin đánh dấu nghỉ phép
@@ -227,6 +233,7 @@ app.use(async (req, res, next) => {
             const receiverUser = await User.findById(leaveRecord.user);
             if (receiverUser) {
                 await createNotification({
+                    io, // Truyền đối tượng io
                     sender: user._id,
                     senderName: user.name,
                     receiver: receiverUser._id,
@@ -236,9 +243,47 @@ app.use(async (req, res, next) => {
                     entityId: leaveRecord._id,
                     relatedDate: leaveRecord.date,
                 });
-                io.to(receiverUser._id.toString()).emit('newNotification', { type: 'marked_leave', entityId: leaveRecord._id });
-                console.log(`[Notification Middleware] Emitted 'marked_leave' to user ${receiverUser._id}`);
+                // io.to(receiverUser._id.toString()).emit('newNotification', { type: 'marked_leave', entityId: leaveRecord._id }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed 'marked_leave' for user ${receiverUser._id}`);
             }
+        }
+        // Thêm logic thông báo khi Admin chỉnh sửa thông tin người dùng khác
+        else if (path.startsWith('/api/auth/users/') && req.method === 'PUT' && user.role === 'admin' && responseData?._id) {
+            const updatedUserId = responseData._id;
+            const updatedUser = await User.findById(updatedUserId);
+            if (updatedUser) {
+                // Thông báo cho người dùng bị chỉnh sửa
+                await createNotification({
+                    io, // Truyền đối tượng io
+                    sender: user._id,
+                    senderName: user.name,
+                    receiver: updatedUser._id,
+                    receiverRole: updatedUser.role,
+                    type: 'user_profile_updated_by_admin',
+                    message: `Admin ${user.name} đã cập nhật thông tin tài khoản của bạn.`,
+                    entityId: updatedUser._id,
+                    relatedDate: new Date().toISOString().split('T')[0],
+                });
+                // io.to(updatedUser._id.toString()).emit('newNotification', { type: 'user_profile_updated_by_admin', entityId: updatedUser._id }); // ĐÃ BỎ DÒNG NÀY
+                console.log(`[Notification Middleware] Processed 'user_profile_updated_by_admin' for user ${updatedUser._id}`);
+            }
+        }
+        // Thêm logic thông báo khi người dùng tự chỉnh sửa thông tin cá nhân
+        else if (path === '/api/auth/me/profile' && req.method === 'PUT' && user && responseData?._id) {
+            // Thông báo cho chính người dùng
+            await createNotification({
+                io, // Truyền đối tượng io
+                sender: user._id, // Chính người dùng là người gửi
+                senderName: user.name,
+                receiver: user._id,
+                receiverRole: user.role,
+                type: 'own_profile_updated',
+                message: `Bạn đã cập nhật thông tin hồ sơ cá nhân thành công.`,
+                entityId: user._id,
+                relatedDate: new Date().toISOString().split('T')[0],
+            });
+            // io.to(user._id.toString()).emit('newNotification', { type: 'own_profile_updated', entityId: user._id }); // ĐÃ BỎ DÒNG NÀY
+            console.log(`[Notification Middleware] Processed 'own_profile_updated' for user ${user._id}`);
         }
         // Thông báo khi có người đăng ký khóa học (đã được xử lý trong courseRegistrationController.js)
         // Thông báo khi đăng ký khóa học được duyệt/từ chối (đã được xử lý trong courseRegistrationController.js)
@@ -247,7 +292,7 @@ app.use(async (req, res, next) => {
         // Xử lý thông báo cho chức năng đánh giá
         // Thông báo khi admin tạo bản đánh giá mới (đã xử lý trong evaluationFormController.js)
         // Thông báo khi user hoàn thành bản đánh giá (đã xử lý trong evaluationResponseController.js)
-        // Thông báo khi admin đã nhận bản đánh giá của user (đã xử lý trong evaluationResponseController.js)
+        // Thông báo khi admin đã nhận bản đánh giá của user (đã được xử lý trong evaluationResponseController.js)
     }
     next();
 });

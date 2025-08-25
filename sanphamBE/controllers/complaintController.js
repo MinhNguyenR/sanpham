@@ -1,16 +1,12 @@
-// backend/controllers/complaintController.js
 import asyncHandler from 'express-async-handler';
 import Complaint from '../models/Complaint.js';
-import User from '../models/User.js'; // Để lấy thông tin người dùng
-import { createNotification } from './notificationController.js'; // Import hàm tạo thông báo
-import { format } from 'date-fns'; // Import format để định dạng ngày
+import User from '../models/User.js'; 
+import { createNotification } from './notificationController.js';
+import { format } from 'date-fns'; 
 
-// @desc    Tạo khiếu nại mới
-// @route   POST /api/complaints
-// @access  Private (User & Admin)
 const createComplaint = asyncHandler(async (req, res) => {
     const { subject, description } = req.body;
-    const { _id, name, email } = req.user;
+    const { _id, name, email, position } = req.user; 
 
     if (!subject || !description) {
         res.status(400);
@@ -24,6 +20,7 @@ const createComplaint = asyncHandler(async (req, res) => {
         subject,
         description,
         status: 'pending',
+        position, 
     });
 
     if (complaint) {
@@ -31,17 +28,16 @@ const createComplaint = asyncHandler(async (req, res) => {
         const admins = await User.find({ role: 'admin' });
         for (const admin of admins) {
             await createNotification({
-                sender: _id, // Người gửi là user
+                sender: _id,
                 senderName: name,
                 receiver: admin._id,
                 receiverRole: 'admin',
                 type: 'new_complaint',
                 message: `${name} đã gửi một khiếu nại mới với chủ đề: "${subject}".`,
                 entityId: complaint._id,
-                relatedDate: format(new Date(), 'yyyy-MM-dd'), // Ngày hiện tại
+                relatedDate: format(new Date(), 'yyyy-MM-dd'),
             });
-            // Emit thông báo qua Socket.IO cho từng admin
-            if (req.io) { // Đảm bảo req.io tồn tại
+            if (req.io) {
                 req.io.to(admin._id.toString()).emit('newNotification', { type: 'new_complaint', entityId: complaint._id });
             }
         }
@@ -56,17 +52,12 @@ const createComplaint = asyncHandler(async (req, res) => {
     }
 });
 
-// @desc    Lấy tất cả khiếu nại của người dùng hiện tại
-// @route   GET /api/complaints/me
-// @access  Private (User & Admin)
 const getUserComplaints = asyncHandler(async (req, res) => {
     const complaints = await Complaint.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.status(200).json(complaints);
 });
 
-// @desc    Lấy tất cả khiếu nại (dành cho Admin)
-// @route   GET /api/complaints/admin
-// @access  Private (Admin only)
+
 const getAllComplaints = asyncHandler(async (req, res) => {
     const { date } = req.query; // Lọc theo ngày (YYYY-MM-DD)
 
@@ -85,19 +76,17 @@ const getAllComplaints = asyncHandler(async (req, res) => {
     }
 
     const complaints = await Complaint.find(query)
-        .populate('user', 'name email role')
+        .populate('user', 'name email role position')
         .populate('resolvedBy', 'name') // Lấy tên admin đã giải quyết
         .sort({ createdAt: -1 });
 
     res.status(200).json(complaints);
 });
 
-// @desc    Cập nhật trạng thái khiếu nại (Admin giải quyết)
-// @route   PUT /api/complaints/:id/status
-// @access  Private (Admin only)
+
 const updateComplaintStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { status, adminNotes } = req.body; // status: 'resolved'
+    const { status, adminNotes } = req.body; 
 
     const complaint = await Complaint.findById(id);
 
